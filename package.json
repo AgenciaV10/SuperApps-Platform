@@ -1,14 +1,14 @@
 {
-  "name": "bolt",
-  "description": "An AI Agent",
+  "name": "Super Apps",
+  "description": "Turn concepts into apps—instantly.",
   "private": true,
   "license": "MIT",
   "sideEffects": false,
   "type": "module",
   "version": "1.0.0",
   "author": {
-    "name": "bolt.diy team",
-    "email": "maintainers@bolt.diy"
+    "name": "V10 Agency",
+    "email": "help@superapps.ai"
   },
   "scripts": {
     "deploy": "npm run build && wrangler pages deploy",
