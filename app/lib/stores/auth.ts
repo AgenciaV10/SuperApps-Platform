@@ -92,6 +92,8 @@ export const authActions = {
       authStore.set({ ...authStore.get(), isLoading: false });
       throw error;
     }
+
+    return { data: null, error: new Error('Unexpected error in signIn') };
   },
 
   // Registro
@@ -114,9 +116,12 @@ export const authActions = {
           last_sign_in_at: data.user.last_sign_in_at,
         };
 
-        // O perfil será criado automaticamente pelo trigger
-        // Aguardar um pouco para o trigger processar
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        /*
+         * O perfil será criado automaticamente pelo trigger
+         * Aguardar um pouco para o trigger processar
+         */
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
         const profile = await authHelpers.getUserProfile(user.id);
 
         authStore.set({
@@ -132,6 +137,8 @@ export const authActions = {
       authStore.set({ ...authStore.get(), isLoading: false });
       throw error;
     }
+
+    return { data: null, error: new Error('Unexpected error in signUp') };
   },
 
   // Logout
@@ -193,8 +200,10 @@ if (typeof window !== 'undefined') {
 
       // Restaurar prompt pendente após login
       const pendingPrompt = localStorage.getItem('pendingPrompt');
+
       if (pendingPrompt) {
         console.log('Restaurando prompt pendente:', pendingPrompt);
+
         // O prompt será restaurado pelo componente de chat
       }
     } else if (event === 'SIGNED_OUT') {

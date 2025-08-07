@@ -8,8 +8,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   if (code) {
     try {
-      // O Supabase vai processar o código OAuth automaticamente
-      // Verificamos se o usuário está autenticado
+      /*
+       * O Supabase vai processar o código OAuth automaticamente
+       * Verificamos se o usuário está autenticado
+       */
       const isAuth = await authHelpers.isAuthenticated();
 
       if (isAuth) {
@@ -27,8 +29,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function AuthCallback() {
   useEffect(() => {
-    // Este componente geralmente não será renderizado
-    // pois o loader redireciona antes disso
+    /*
+     * Este componente geralmente não será renderizado
+     * pois o loader redireciona antes disso
+     */
     console.log('Processing OAuth callback...');
   }, []);
 

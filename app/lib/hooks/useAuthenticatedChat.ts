@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from '@remix-run/react';
 import { useStore } from '@nanostores/react';
 import { authStore, authActions } from '~/lib/stores/auth';
-import { authHelpers, supabase } from '~/lib/supabase/client';
+import { authHelpers } from '~/lib/supabase/client';
 
 export const useAuthenticatedChat = () => {
   const navigate = useNavigate();
@@ -18,7 +18,7 @@ export const useAuthenticatedChat = () => {
   const interceptSendMessage = async (
     originalSendMessage: (event: React.UIEvent, messageInput?: string) => Promise<void>,
     event: React.UIEvent,
-    messageInput?: string
+    messageInput?: string,
   ) => {
     setIsCheckingAuth(true);
 
@@ -29,6 +29,7 @@ export const useAuthenticatedChat = () => {
       if (!isAuthenticated) {
         // Salvar prompt no localStorage
         const promptToSave = messageInput || '';
+
         if (promptToSave.trim()) {
           localStorage.setItem('pendingPrompt', promptToSave);
           console.log('Prompt salvo para restaurar após login:', promptToSave);
@@ -36,6 +37,7 @@ export const useAuthenticatedChat = () => {
 
         // Redirecionar para login
         navigate('/auth/login');
+
         return;
       }
 
@@ -43,11 +45,14 @@ export const useAuthenticatedChat = () => {
       await originalSendMessage(event, messageInput);
     } catch (error) {
       console.error('Error in interceptSendMessage:', error);
+
       // Em caso de erro, salvar prompt e redirecionar para login
       const promptToSave = messageInput || '';
+
       if (promptToSave.trim()) {
         localStorage.setItem('pendingPrompt', promptToSave);
       }
+
       navigate('/auth/login');
     } finally {
       setIsCheckingAuth(false);
@@ -58,12 +63,15 @@ export const useAuthenticatedChat = () => {
   const restorePendingPrompt = (): string | null => {
     if (auth.isAuthenticated) {
       const pendingPrompt = localStorage.getItem('pendingPrompt');
+
       if (pendingPrompt) {
         localStorage.removeItem('pendingPrompt');
         console.log('Prompt restaurado após login:', pendingPrompt);
+
         return pendingPrompt;
       }
     }
+
     return null;
   };
 
@@ -82,6 +90,7 @@ export const useAuthenticatedChat = () => {
         requestsToday: auth.profile.request_count_today,
       };
     }
+
     return null;
   };
 

@@ -65,9 +65,10 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
     parseCookies(cookieHeader || '').providers || '{}',
   );
 
-    // Verificação de autenticação via cookies do Supabase
+  // Verificação de autenticação via cookies do Supabase
   const supabaseUrl = 'https://jhvsuubkknhdrpwfjsrc.supabase.co';
-  const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpodnN1dWJra25oZHJwd2Zqc3JjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0MzUzODUsImV4cCI6MjA3MDAxMTM4NX0.BIinCC-RB3Il_atDAMjHcElL4zEx8UX6ak7LCWpa_qY';
+  const supabaseAnonKey =
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpodnN1dWJra25oZHJwd2Zqc3JjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0MzUzODUsImV4cCI6MjA3MDAxMTM4NX0.BIinCC-RB3Il_atDAMjHcElL4zEx8UX6ak7LCWpa_qY';
 
   const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
@@ -79,35 +80,47 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
 
   // Obter usuário autenticado via cookies
   let currentUser = null;
+
   try {
     // Extrair tokens dos cookies do Supabase
     const cookies = parseCookies(cookieHeader || '');
     const accessToken = cookies[`sb-${supabaseUrl.split('//')[1].split('.')[0]}-auth-token`];
-    
+
     if (accessToken) {
       try {
         const tokenData = JSON.parse(accessToken);
+
         if (tokenData.access_token) {
-          const { data: { user }, error } = await supabaseClient.auth.getUser(tokenData.access_token);
+          const {
+            data: { user },
+            error,
+          } = await supabaseClient.auth.getUser(tokenData.access_token);
+
           if (!error && user) {
             currentUser = user;
           }
         }
-      } catch (parseError) {
+      } catch {
         console.log('Failed to parse auth token from cookies');
       }
     }
-    
-    // Se não conseguiu autenticar, temporariamente permitir sem auth
-    // para não quebrar o fluxo durante a implementação
+
+    /*
+     * Se não conseguiu autenticar, temporariamente permitir sem auth
+     * para não quebrar o fluxo durante a implementação
+     */
     if (!currentUser) {
       console.log('No authenticated user found, allowing request for now');
-      // TODO: Remover isso na Etapa 3 quando implementarmos verificação de orçamento
-      // Por enquanto, criar um usuário fake para não quebrar o logging
+
+      /*
+       * TODO: Remover isso na Etapa 3 quando implementarmos verificação de orçamento
+       * Por enquanto, criar um usuário fake para não quebrar o logging
+       */
       currentUser = { id: 'anonymous', email: 'anonymous@example.com' };
     }
   } catch (error) {
     console.error('Auth verification error:', error);
+
     // Temporariamente permitir sem auth
     currentUser = { id: 'anonymous', email: 'anonymous@example.com' };
   }
@@ -286,23 +299,21 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
               if (usage && currentUser) {
                 try {
                   const lastUserMessage = processedMessages.filter((msg) => msg.role === 'user').slice(-1)[0];
-                  const { model: extractedModel, provider: extractedProvider } = extractPropertiesFromMessage(lastUserMessage);
+                  const { model: extractedModel } = extractPropertiesFromMessage(lastUserMessage);
 
                   // Calcular custo aproximado em reais (conversão USD -> BRL ~5.60)
                   const costInUsd = (usage.totalTokens || 0) * 0.000002; // Aproximação base
-                  const costInReais = costInUsd * 5.60;
+                  const costInReais = costInUsd * 5.6;
 
-                  const { error: logError } = await supabaseClient
-                    .from('usage_log')
-                    .insert({
-                      user_id: currentUser.id,
-                      request_id: generateId(),
-                      model_used: extractedModel || 'unknown',
-                      tokens_used: usage.totalTokens || 0,
-                      cost_in_usd: costInUsd,
-                      cost_in_reais: costInReais,
-                      request_type: 'chat',
-                    });
+                  const { error: logError } = await supabaseClient.from('usage_log').insert({
+                    user_id: currentUser.id,
+                    request_id: generateId(),
+                    model_used: extractedModel || 'unknown',
+                    tokens_used: usage.totalTokens || 0,
+                    cost_in_usd: costInUsd,
+                    cost_in_reais: costInReais,
+                    request_type: 'chat',
+                  });
 
                   if (logError) {
                     console.error('Error logging usage:', logError);

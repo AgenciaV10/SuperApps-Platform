@@ -29,7 +29,6 @@ import type { TextUIPart, FileUIPart, Attachment } from '@ai-sdk/ui-utils';
 import { useMCPStore } from '~/lib/stores/mcp';
 import type { LlmErrorAlertType } from '~/types/actions';
 import { useAuthenticatedChat } from '~/lib/hooks/useAuthenticatedChat';
-import { supabase } from '~/lib/supabase/client';
 
 const toastAnimation = cssTransition({
   enter: 'animated fadeInRight',
@@ -153,12 +152,7 @@ export const ChatImpl = memo(
     const mcpSettings = useMCPStore((state) => state.settings);
 
     // Hook de autenticação
-    const {
-      auth,
-      isCheckingAuth,
-      interceptSendMessage,
-      restorePendingPrompt
-    } = useAuthenticatedChat();
+    const { auth, interceptSendMessage, restorePendingPrompt } = useAuthenticatedChat();
 
     const {
       messages,
@@ -609,8 +603,10 @@ export const ChatImpl = memo(
     useEffect(() => {
       if (auth.isAuthenticated && !auth.isLoading) {
         const pendingPrompt = restorePendingPrompt();
+
         if (pendingPrompt && !input.trim()) {
           setInput(pendingPrompt);
+
           // Focar no textarea para facilitar envio
           setTimeout(() => textareaRef.current?.focus(), 100);
         }
