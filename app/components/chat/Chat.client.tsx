@@ -28,6 +28,8 @@ import type { ElementInfo } from '~/components/workbench/Inspector';
 import type { TextUIPart, FileUIPart, Attachment } from '@ai-sdk/ui-utils';
 import { useMCPStore } from '~/lib/stores/mcp';
 import type { LlmErrorAlertType } from '~/types/actions';
+import { useAuthenticatedChat } from '~/lib/hooks/useAuthenticatedChat';
+import { supabase } from '~/lib/supabase/client';
 
 const toastAnimation = cssTransition({
   enter: 'animated fadeInRight',
@@ -149,6 +151,14 @@ export const ChatImpl = memo(
     const [chatMode, setChatMode] = useState<'discuss' | 'build'>('build');
     const [selectedElement, setSelectedElement] = useState<ElementInfo | null>(null);
     const mcpSettings = useMCPStore((state) => state.settings);
+
+    // Hook de autenticação
+    const {
+      auth,
+      isCheckingAuth,
+      interceptSendMessage,
+      restorePendingPrompt
+    } = useAuthenticatedChat();
 
     const {
       messages,
@@ -419,7 +429,8 @@ export const ChatImpl = memo(
       return attachments;
     };
 
-    const sendMessage = async (_event: React.UIEvent, messageInput?: string) => {
+    // Função original de envio de mensagem
+    const originalSendMessage = async (_event: React.UIEvent, messageInput?: string) => {
       const messageContent = messageInput || input;
 
       if (!messageContent?.trim()) {
@@ -588,6 +599,23 @@ export const ChatImpl = memo(
 
       textareaRef.current?.blur();
     };
+
+    // Função interceptada de envio de mensagem com verificação de autenticação
+    const sendMessage = async (event: React.UIEvent, messageInput?: string) => {
+      await interceptSendMessage(originalSendMessage, event, messageInput);
+    };
+
+    // Restaurar prompt pendente após login
+    useEffect(() => {
+      if (auth.isAuthenticated && !auth.isLoading) {
+        const pendingPrompt = restorePendingPrompt();
+        if (pendingPrompt && !input.trim()) {
+          setInput(pendingPrompt);
+          // Focar no textarea para facilitar envio
+          setTimeout(() => textareaRef.current?.focus(), 100);
+        }
+      }
+    }, [auth.isAuthenticated, auth.isLoading]);
 
     /**
      * Handles the change event for the textarea and updates the input state.
