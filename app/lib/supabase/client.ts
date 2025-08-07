@@ -2,7 +2,8 @@ import { createClient } from '@supabase/supabase-js';
 
 // Configuração das credenciais do Supabase
 const supabaseUrl = 'https://jhvsuubkknhdrpwfjsrc.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpodnN1dWJra25oZHJwd2Zqc3JjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0MzUzODUsImV4cCI6MjA3MDAxMTM4NX0.BIinCC-RB3Il_atDAMjHcElL4zEx8UX6ak7LCWpa_qY';
+const supabaseAnonKey =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpodnN1dWJra25oZHJwd2Zqc3JjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0MzUzODUsImV4cCI6MjA3MDAxMTM4NX0.BIinCC-RB3Il_atDAMjHcElL4zEx8UX6ak7LCWpa_qY';
 
 // Cliente Supabase para autenticação
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -36,22 +37,22 @@ export interface UserProfile {
 export const authHelpers = {
   // Obter usuário atual
   getCurrentUser: async (): Promise<AuthUser | null> => {
-    const { data: { user } } = await supabase.auth.getUser();
-    return user ? {
-      id: user.id,
-      email: user.email!,
-      created_at: user.created_at,
-      last_sign_in_at: user.last_sign_in_at,
-    } : null;
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    return user
+      ? {
+          id: user.id,
+          email: user.email!,
+          created_at: user.created_at,
+          last_sign_in_at: user.last_sign_in_at,
+        }
+      : null;
   },
 
   // Obter perfil do usuário
   getUserProfile: async (userId: string): Promise<UserProfile | null> => {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    const { data, error } = await supabase.from('users').select('*').eq('id', userId).single();
 
     if (error) {
       console.error('Error fetching user profile:', error);
@@ -104,13 +105,17 @@ export const authHelpers = {
 
   // Verificar se está autenticado
   isAuthenticated: async (): Promise<boolean> => {
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     return !!session;
   },
 
   // Obter sessão atual
   getSession: async () => {
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     return session;
   },
 };
