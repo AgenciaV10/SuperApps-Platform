@@ -1,6 +1,7 @@
 import { useStore } from '@nanostores/react';
-import type { LinksFunction } from '@remix-run/cloudflare';
-import { Links, Meta, Outlet, Scripts, ScrollRestoration } from '@remix-run/react';
+import type { LinksFunction, LoaderFunctionArgs } from '@remix-run/cloudflare';
+import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from '@remix-run/react';
+import { json } from '@remix-run/cloudflare';
 import tailwindReset from '@unocss/reset/tailwind-compat.css?url';
 import { themeStore } from './lib/stores/theme';
 import { stripIndents } from './utils/stripIndent';
@@ -15,6 +16,17 @@ import globalStyles from './styles/index.scss?url';
 import xtermStyles from '@xterm/xterm/css/xterm.css?url';
 
 import 'virtual:uno.css';
+
+export const loader = ({ context }: LoaderFunctionArgs) => {
+  return json({
+    ENV: {
+      // Use optional chaining with index access to satisfy Env typing
+      SUPABASE_URL: (context.cloudflare?.env as any)?.SUPABASE_URL || process.env.SUPABASE_URL,
+      SUPABASE_ANON_KEY: (context.cloudflare?.env as any)?.SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY,
+      NODE_ENV: process.env.NODE_ENV,
+    },
+  });
+};
 
 export const links: LinksFunction = () => [
   {
@@ -85,6 +97,7 @@ import { logStore } from './lib/stores/logs';
 
 export default function App() {
   const theme = useStore(themeStore);
+  const { ENV } = useLoaderData<typeof loader>();
 
   useEffect(() => {
     logStore.logSystem('Application initialized', {
@@ -97,6 +110,11 @@ export default function App() {
 
   return (
     <Layout>
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `window.ENV = ${JSON.stringify(ENV)}`,
+        }}
+      />
       <Outlet />
     </Layout>
   );
