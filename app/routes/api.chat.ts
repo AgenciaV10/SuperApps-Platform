@@ -13,6 +13,7 @@ import { createSummary } from '~/lib/.server/llm/create-summary';
 import { extractPropertiesFromMessage } from '~/lib/.server/llm/utils';
 import type { DesignScheme } from '~/types/design-scheme';
 import { MCPService } from '~/lib/services/mcpService';
+import { optionalAuth } from '~/lib/auth/middleware';
 
 export async function action(args: ActionFunctionArgs) {
   return chatAction(args);
@@ -39,6 +40,19 @@ function parseCookies(cookieHeader: string): Record<string, string> {
 }
 
 async function chatAction({ context, request }: ActionFunctionArgs) {
+  // Verificação opcional de autenticação - implementa progressive enhancement
+  const authResult = await optionalAuth(request);
+
+  // Log da autenticação para debug
+  if (authResult.isAuthenticated) {
+    logger.debug('User authenticated for chat request', {
+      userId: authResult.user?.id,
+      email: authResult.user?.email,
+    });
+  } else {
+    logger.debug('Chat request without authentication - falling back to local mode');
+  }
+
   const { messages, files, promptId, contextOptimization, supabase, chatMode, designScheme, maxLLMSteps } =
     await request.json<{
       messages: Messages;
@@ -57,6 +71,13 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
       };
       maxLLMSteps: number;
     }>();
+
+  // Adicionar informações do usuário autenticado ao contexto se disponível
+  const enhancedContext = {
+    ...context,
+    user: authResult.user,
+    isAuthenticated: authResult.isAuthenticated,
+  };
 
   const cookieHeader = request.headers.get('Cookie');
   const apiKeys = JSON.parse(parseCookies(cookieHeader || '').apiKeys || '{}');
@@ -109,7 +130,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
 
           summary = await createSummary({
             messages: [...processedMessages],
-            env: context.cloudflare?.env,
+            env: enhancedContext.cloudflare?.env,
             apiKeys,
             providerSettings,
             promptId,
@@ -151,7 +172,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
           console.log(`Messages count: ${processedMessages.length}`);
           filteredFiles = await selectContext({
             messages: [...processedMessages],
-            env: context.cloudflare?.env,
+            env: enhancedContext.cloudflare?.env,
             apiKeys,
             files,
             providerSettings,
@@ -257,7 +278,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
 
             const result = await streamText({
               messages: [...processedMessages],
-              env: context.cloudflare?.env,
+              env: enhancedContext.cloudflare?.env,
               options,
               apiKeys,
               files,
@@ -298,7 +319,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
 
         const result = await streamText({
           messages: [...processedMessages],
-          env: context.cloudflare?.env,
+          env: enhancedContext.cloudflare?.env,
           options,
           apiKeys,
           files,

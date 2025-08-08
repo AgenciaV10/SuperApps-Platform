@@ -6,6 +6,8 @@ import { createScopedLogger } from '~/utils/logger';
 import { unreachable } from '~/utils/unreachable';
 import type { ActionCallbackData } from './message-parser';
 import type { BoltShell } from '~/utils/shell';
+import { scheduleWorkspaceSnapshot, setLastStartCommand } from '~/lib/persistence/workspaceSnapshot';
+import { getCurrentChatId } from '~/utils/fileLocks';
 
 const logger = createScopedLogger('ActionRunner');
 
@@ -292,6 +294,18 @@ export class ActionRunner {
     });
     logger.debug(`${action.type} Shell Response: [exit code:${resp?.exitCode}]`);
 
+    // Persist last start command for auto-start on refresh
+    try {
+      const chat = getCurrentChatId();
+      setLastStartCommand(chat, action.content);
+
+      // Schedule a snapshot shortly after starting to capture generated files
+      const webcontainer = await this.#webcontainer;
+      scheduleWorkspaceSnapshot(webcontainer, chat, { lastStartCommand: action.content });
+    } catch (e) {
+      logger.error('Failed to persist last start command', e);
+    }
+
     if (resp?.exitCode != 0) {
       throw new ActionCommandError('Failed To Start Application', resp?.output || 'No Output Available');
     }
@@ -324,6 +338,12 @@ export class ActionRunner {
     try {
       await webcontainer.fs.writeFile(relativePath, action.content);
       logger.debug(`File written ${relativePath}`);
+
+      // Debounced snapshot of workspace after file writes
+      try {
+        const chat = getCurrentChatId();
+        scheduleWorkspaceSnapshot(webcontainer, chat);
+      } catch {}
     } catch (error) {
       logger.error('Failed to write file\n\n', error);
     }
@@ -462,36 +482,19 @@ export class ActionRunner {
           throw new Error('Migration requires a filePath');
         }
 
-        // Show alert for migration action
-        this.onSupabaseAlert?.({
-          type: 'info',
-          title: 'Supabase Migration',
-          description: `Create migration file: ${filePath}`,
-          content,
-          source: 'supabase',
-        });
-
-        // Only create the migration file
+        // Create the migration file silently (Supabase UI disabled for now)
         await this.#runFileAction({
           type: 'file',
           filePath,
           content,
           changeSource: 'supabase',
         } as any);
-        return { success: true };
+        return { success: true, skippedUi: true };
 
       case 'query': {
-        // Always show the alert and let the SupabaseAlert component handle connection state
-        this.onSupabaseAlert?.({
-          type: 'info',
-          title: 'Supabase Query',
-          description: 'Execute database query',
-          content,
-          source: 'supabase',
-        });
-
-        // The actual execution will be triggered from SupabaseChatAlert
-        return { pending: true };
+        // Skip executing or prompting for Supabase queries (local-first mode)
+        logger.debug('Supabase query skipped (local-first mode).');
+        return { skipped: true };
       }
 
       default:
