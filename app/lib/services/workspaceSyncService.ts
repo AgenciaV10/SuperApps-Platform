@@ -29,7 +29,7 @@ export async function upsertWorkspaceSnapshot(
         last_start_command: lastStartCommand || null,
         updated_at: new Date().toISOString(),
       } as any,
-      { onConflict: 'chat_id' },
+      { onConflict: 'chat_id,user_id' },
     );
 
     if (error) {

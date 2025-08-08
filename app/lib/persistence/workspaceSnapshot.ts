@@ -138,6 +138,13 @@ export async function saveWorkspaceSnapshot(
   }
 }
 
+export async function getWorkspaceFiles(webcontainer: WebContainer): Promise<SnapshotFile[]> {
+  const ignored = new Set(['node_modules', '.git', '.history', 'dist', 'build', '.next']);
+  const root = webcontainer.workdir;
+
+  return readDirectoryRecursive(webcontainer, root, ignored);
+}
+
 export function scheduleWorkspaceSnapshot(
   webcontainer: WebContainer,
   chatId: string,
