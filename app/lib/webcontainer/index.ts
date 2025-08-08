@@ -70,6 +70,8 @@ if (!import.meta.env.SSR) {
               }
             }
           }
+
+          // Remote workspace sync disabled by default for performance
         } catch (e) {
           console.warn('Failed to restore workspace snapshot', e);
         }
