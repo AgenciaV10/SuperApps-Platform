@@ -78,19 +78,12 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
     >
       <svg className={classNames(styles.PromptEffectContainer)}>
         <defs>
-          <linearGradient
-            id="line-gradient"
-            x1="20%"
-            y1="0%"
-            x2="-14%"
-            y2="10%"
-            gradientUnits="userSpaceOnUse"
-            gradientTransform="rotate(-45)"
-          >
-            <stop offset="0%" stopColor="#b44aff" stopOpacity="0%"></stop>
-            <stop offset="40%" stopColor="#b44aff" stopOpacity="80%"></stop>
-            <stop offset="50%" stopColor="#b44aff" stopOpacity="80%"></stop>
-            <stop offset="100%" stopColor="#b44aff" stopOpacity="0%"></stop>
+          <linearGradient id="line-gradient" x1="0%" y1="0%" x2="100%" y2="0%" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#FF7C3F" stopOpacity="0.0"></stop>
+            <stop offset="10%" stopColor="#FF7C3F" stopOpacity="0.9"></stop>
+            <stop offset="50%" stopColor="#FF4C7D" stopOpacity="1"></stop>
+            <stop offset="90%" stopColor="#A24CFF" stopOpacity="0.9"></stop>
+            <stop offset="100%" stopColor="#A24CFF" stopOpacity="0.0"></stop>
           </linearGradient>
           <linearGradient id="shine-gradient">
             <stop offset="0%" stopColor="white" stopOpacity="0%"></stop>
@@ -167,7 +160,10 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
         </div>
       )}
       <div
-        className={classNames('relative shadow-xs border border-bolt-elements-borderColor backdrop-blur rounded-lg')}
+        className={classNames(
+          'relative shadow-xs border border-bolt-elements-borderColor backdrop-blur rounded-lg',
+          styles.ChatInputWrapper,
+        )}
       >
         <textarea
           ref={props.textareaRef}
@@ -262,13 +258,21 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
           <div className="flex gap-1 items-center">
             <ColorSchemeDialog designScheme={props.designScheme} setDesignScheme={props.setDesignScheme} />
             <McpTools />
-            <IconButton title="Upload file" className="transition-all" onClick={() => props.handleFileUpload()}>
+            <IconButton
+              title="Upload file"
+              className={classNames('transition-all', styles.ChatIconButton)}
+              onClick={() => props.handleFileUpload()}
+            >
               <div className="i-ph:paperclip text-xl"></div>
             </IconButton>
             <IconButton
               title="Enhance prompt"
               disabled={props.input.length === 0 || props.enhancingPrompt}
-              className={classNames('transition-all', props.enhancingPrompt ? 'opacity-100' : '')}
+              className={classNames(
+                'transition-all',
+                styles.ChatIconButton,
+                props.enhancingPrompt ? 'opacity-100' : '',
+              )}
               onClick={() => {
                 props.enhancePrompt?.();
                 toast.success('Prompt enhanced!');
@@ -292,6 +296,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                 title="Discuss"
                 className={classNames(
                   'transition-all flex items-center gap-1 px-1.5',
+                  styles.ChatIconButton,
                   props.chatMode === 'discuss'
                     ? '!bg-bolt-elements-item-backgroundAccent !text-bolt-elements-item-contentAccent'
                     : 'bg-bolt-elements-item-backgroundDefault text-bolt-elements-item-contentDefault',
@@ -306,7 +311,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
             )}
             <IconButton
               title="Model Settings"
-              className={classNames('transition-all flex items-center gap-1', {
+              className={classNames('transition-all flex items-center gap-1', styles.ChatIconButton, {
                 'bg-bolt-elements-item-backgroundAccent text-bolt-elements-item-contentAccent':
                   props.isModelSettingsCollapsed,
                 'bg-bolt-elements-item-backgroundDefault text-bolt-elements-item-contentDefault':

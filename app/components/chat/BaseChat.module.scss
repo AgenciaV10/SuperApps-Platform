@@ -39,9 +39,134 @@
   stroke: url(#line-gradient);
   stroke-dasharray: 35px 65px;
   stroke-dashoffset: 10;
+  animation: promptLineFlow 16s linear infinite;
 }
 
 .PromptShine {
   fill: url(#shine-gradient);
   mix-blend-mode: overlay;
+}
+
+@keyframes promptLineFlow {
+  0% {
+    stroke-dashoffset: 0;
+    opacity: 0.7;
+  }
+  50% {
+    stroke-dashoffset: -200;
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: -400;
+    opacity: 0.7;
+  }
+}
+
+/* Chat input wrapper: animated gradient ring/glow */
+.ChatInputWrapper {
+  position: relative;
+  border-color: transparent !important;
+  isolation: isolate;
+}
+
+.ChatInputWrapper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 0.5rem; /* match rounded-lg */
+  padding: 1px; /* border thickness */
+  background: linear-gradient(90deg, #FF7C3F, #FF4C7D, #A24CFF);
+  background-size: 200% 200%;
+  animation: chatGradientMove 18s linear infinite;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.75;
+}
+
+.ChatInputWrapper::after {
+  content: '';
+  position: absolute;
+  inset: -8px; /* soft outer glow */
+  border-radius: 0.75rem;
+  background: radial-gradient(60% 60% at 50% 50%, rgba(255, 76, 125, 0.25), rgba(162, 76, 255, 0.1), transparent 70%);
+  filter: blur(8px);
+  pointer-events: none;
+  opacity: 0.4;
+  transition: opacity 200ms ease;
+}
+
+.ChatInputWrapper:focus-within::before {
+  opacity: 1;
+}
+
+.ChatInputWrapper:focus-within::after {
+  opacity: 0.6;
+}
+
+@keyframes chatGradientMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .PromptEffectLine {
+    animation: none;
+  }
+  .ChatInputWrapper::before {
+    animation: none;
+  }
+}
+
+/* Gradient ring style for small icon buttons in the chat toolbar */
+.ChatIconButton {
+  position: relative;
+  border-color: transparent !important;
+}
+
+.ChatIconButton::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 0.375rem; /* rounded-md */
+  padding: 1px;
+  background: linear-gradient(90deg, #FF7C3F, #FF4C7D, #A24CFF);
+  background-size: 200% 200%;
+  animation: chatGradientMove 18s linear infinite;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.55;
+  transition: opacity 200ms ease;
+}
+
+.ChatIconButton:hover::before,
+.ChatIconButton:focus-visible::before {
+  opacity: 0.9;
+}
+
+.ChatIconButton::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 0.5rem;
+  background: radial-gradient(50% 50% at 50% 50%, rgba(255, 124, 63, 0.12), rgba(255, 76, 125, 0.08), rgba(162, 76, 255, 0.06));
+  filter: blur(6px);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.ChatIconButton:hover::after,
+.ChatIconButton:focus-visible::after {
+  opacity: 1;
 }
