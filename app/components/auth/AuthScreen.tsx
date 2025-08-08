@@ -171,7 +171,14 @@ export function AuthScreen({
         {/* Header */}
         <div className="text-center">
           <div className="mb-4">
-            <div className="i-bolt:bolt text-4xl text-bolt-elements-item-contentAccent mx-auto"></div>
+            {/* Logo do projeto */}
+            <img
+              src="/logo%20ico.png"
+              alt="Logo"
+              className="mx-auto h-12 w-auto object-contain"
+              loading="eager"
+              decoding="async"
+            />
           </div>
           <h2 className="text-2xl font-bold text-bolt-elements-textPrimary">{getTitle(authMode)}</h2>
           {preservedPrompt && (
@@ -231,7 +238,11 @@ export function AuthScreen({
             <div className="p-3 text-sm text-red-400 bg-red-400/10 border border-red-400/20 rounded">{error}</div>
           )}
 
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            className="w-full text-white bg-gradient-to-r from-[#FF7C3F] via-[#FF4C7D] to-[#A24CFF] hover:brightness-110 focus-visible:ring-0 border-none"
+            disabled={isSubmitting}
+          >
             {isSubmitting ? (
               <div className="flex items-center justify-center">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -250,7 +261,7 @@ export function AuthScreen({
               <button
                 type="button"
                 onClick={() => switchMode('forgot-password')}
-                className="text-sm text-bolt-elements-item-contentAccent hover:underline"
+                className="text-sm text-bolt-elements-item-contentAccent hover:underline bg-transparent hover:bg-transparent focus:outline-none focus:ring-0"
                 disabled={isSubmitting}
               >
                 Esqueceu sua senha?
@@ -260,7 +271,7 @@ export function AuthScreen({
                 <button
                   type="button"
                   onClick={() => switchMode('signup')}
-                  className="text-sm text-bolt-elements-item-contentAccent hover:underline"
+                  className="text-sm text-bolt-elements-item-contentAccent hover:underline bg-transparent hover:bg-transparent focus:outline-none focus:ring-0"
                   disabled={isSubmitting}
                 >
                   Cadastre-se
@@ -275,7 +286,7 @@ export function AuthScreen({
               <button
                 type="button"
                 onClick={() => switchMode('signin')}
-                className="text-sm text-bolt-elements-item-contentAccent hover:underline"
+                className="text-sm text-bolt-elements-item-contentAccent hover:underline bg-transparent hover:bg-transparent focus:outline-none focus:ring-0"
                 disabled={isSubmitting}
               >
                 Entrar
@@ -288,7 +299,7 @@ export function AuthScreen({
               <button
                 type="button"
                 onClick={() => switchMode('signin')}
-                className="text-sm text-bolt-elements-item-contentAccent hover:underline"
+                className="text-sm text-bolt-elements-item-contentAccent hover:underline bg-transparent hover:bg-transparent focus:outline-none focus:ring-0"
                 disabled={isSubmitting}
               >
                 ← Voltar ao login
