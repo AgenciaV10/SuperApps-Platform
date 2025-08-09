@@ -6,15 +6,15 @@ export interface DesignScheme {
 
 export const defaultDesignScheme: DesignScheme = {
   palette: {
-    primary: '#9E7FFF',
+    primary: 'var(--bolt-elements-accent-purple)',
     secondary: '#38bdf8',
     accent: '#f472b6',
-    background: '#171717',
+    background: 'var(--bolt-elements-bg-dark)',
     surface: '#262626',
-    text: '#FFFFFF',
+    text: 'var(--bolt-elements-text-light)',
     textSecondary: '#A3A3A3',
     border: '#2F2F2F',
-    success: '#10b981',
+    success: 'var(--bolt-elements-accent-green)',
     warning: '#f59e0b',
     error: '#ef4444',
   },

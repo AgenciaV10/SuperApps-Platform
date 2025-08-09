@@ -1,21 +1,15 @@
 .rayContainer {
-  // Theme-specific colors
-  --ray-color-primary: color-mix(in srgb, var(--primary-color), transparent 30%);
-  --ray-color-secondary: color-mix(in srgb, var(--secondary-color), transparent 30%);
-  --ray-color-accent: color-mix(in srgb, var(--accent-color), transparent 30%);
-
-  // Theme-specific gradients
-  --ray-gradient-primary: radial-gradient(var(--ray-color-primary) 0%, transparent 70%);
-  --ray-gradient-secondary: radial-gradient(var(--ray-color-secondary) 0%, transparent 70%);
-  --ray-gradient-accent: radial-gradient(var(--ray-color-accent) 0%, transparent 70%);
-
   position: fixed;
   inset: 0;
   overflow: hidden;
   animation: fadeIn 1.5s ease-out;
   pointer-events: none;
   z-index: 0;
-  //   background-color: transparent;
+  /* Opacidade base controlada por token; pode ser sobrescrita inline */
+  --gradient-opacity: var(--bolt-elements-rays-opacity);
+  /* Parallax CSS vars (podem ser definidos inline) */
+  --sa-pointer-x: var(--sa-pointer-x, 50%);
+  --sa-pointer-y: var(--sa-pointer-y, 20%);
 
   :global(html[data-theme='dark']) & {
     mix-blend-mode: screen;
@@ -26,42 +20,49 @@
   }
 }
 
-.lightRay {
+/* Intensidade por variante */
+.rayContainer[data-variant='cta'] {
+  --gradient-opacity: calc(var(--bolt-elements-rays-opacity) + 0.10);
+}
+.rayContainer[data-variant='subtle'] {
+  --gradient-opacity: var(--bolt-elements-rays-opacity);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lightRay {
+    animation: none !important;
+  }
+}
+
+/* NOVAS CAMADAS */
+.layer {
   position: absolute;
-  border-radius: 100%;
-
-  :global(html[data-theme='dark']) & {
-    mix-blend-mode: screen;
-  }
-
-  :global(html[data-theme='light']) & {
-    mix-blend-mode: multiply;
-    opacity: 0.4;
-  }
+  inset: 0;
+  filter: blur(50px);
+  transform: translateZ(0);
 }
 
-.ray1 {
-  width: 600px;
-  height: 800px;
-  background: var(--ray-gradient-primary);
-  transform: rotate(65deg);
-  top: -500px;
-  left: -100px;
-  filter: blur(80px);
-  opacity: 0.6;
-  animation: float1 15s infinite ease-in-out;
+.layerHot {
+  background:
+    radial-gradient(60% 45% at 50% 85%,
+      color-mix(in oklab, var(--sa-bg-hot) calc(var(--sa-intensity) * 60%), transparent),
+      transparent 60%),
+    radial-gradient(80% 55% at 52% 20%,
+      color-mix(in oklab, var(--bolt-elements-rays-purple) calc(var(--gradient-opacity) * 100%), transparent),
+      transparent 60%);
+  mix-blend-mode: screen;
 }
 
-.ray2 {
-  width: 400px;
-  height: 600px;
-  background: var(--ray-gradient-secondary);
-  transform: rotate(-30deg);
-  top: -300px;
-  left: 200px;
-  filter: blur(60px);
-  opacity: 0.6;
-  animation: float2 18s infinite ease-in-out;
+.layerCool {
+  background:
+    radial-gradient(70% 55% at 50% 10%,
+      color-mix(in oklab, var(--sa-bg-cool) calc(var(--sa-intensity) * 55%), transparent),
+      transparent 60%),
+    radial-gradient(65% 50% at var(--sa-pointer-x) var(--sa-pointer-y),
+      color-mix(in oklab, var(--bolt-elements-rays-blue) calc(var(--gradient-opacity) * 100%), transparent),
+      transparent 60%);
+  mix-blend-mode: screen;
+  animation: coolDrift 16s ease-in-out infinite alternate;
 }
 
 .ray3 {
