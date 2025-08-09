@@ -88,7 +88,7 @@
 .ChatInputWrapper::after {
   content: '';
   position: absolute;
-  inset: -8px; /* soft outer glow */
+  inset: -4px; /* soft outer glow */
   border-radius: 0.75rem;
   background: radial-gradient(
     60% 60% at 50% 50%,
@@ -162,7 +162,7 @@
 .ChatIconButton::after {
   content: '';
   position: absolute;
-  inset: -6px;
+  inset: -3px;
   border-radius: 0.5rem;
   background: radial-gradient(
     50% 50% at 50% 50%,
