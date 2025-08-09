@@ -30,6 +30,7 @@ export const AgentMenu: React.FC<AgentMenuProps> = ({
 }) => {
   const [isKeyDialogOpen, setIsKeyDialogOpen] = useState(false);
   const [pendingKey, setPendingKey] = useState<string>('');
+  const [viewMode, setViewMode] = useState<'providers' | 'models'>('providers');
 
   // Sincronizar a API key atual quando o provider muda
   useEffect(() => {
@@ -40,6 +41,19 @@ export const AgentMenu: React.FC<AgentMenuProps> = ({
     }
   }, [provider, apiKeys]);
 
+  // Quando um provider é selecionado, mostrar seus modelos
+  const handleProviderSelect = (selectedProvider: ProviderInfo) => {
+    setProvider(selectedProvider);
+    setViewMode('models');
+  };
+
+  // Voltar para a tela anterior
+  const handleBack = () => {
+    if (viewMode === 'models') {
+      setViewMode('providers');
+    }
+  };
+
   const currentProviderName = provider?.name || 'Nenhum provider selecionado';
 
   const handleSaveKey = () => {
@@ -49,15 +63,134 @@ export const AgentMenu: React.FC<AgentMenuProps> = ({
     setIsKeyDialogOpen(false);
   };
 
-  // Converter modelList para strings se necessário
-  const modelNames = modelList.map(m => typeof m === 'string' ? m : m.name || m.id || String(m));
+  // Filtrar modelos do provider atual
+  const currentProviderModels = modelList.filter(m => {
+    const modelProvider = typeof m === 'string' ? '' : (m.provider || '');
+    return modelProvider === provider?.name;
+  });
 
-  // Debug log para verificar se os modelos estão sendo carregados
+  // Converter modelList para strings se necessário
+  const modelNames = currentProviderModels.map(m => typeof m === 'string' ? m : m.name || m.id || String(m));
+
+    // Função para obter versões de um modelo (usando os modelos reais disponíveis)
+  const getModelVersions = (baseModel: string) => {
+    // Para Google Gemini, usar os modelos reais do provider
+    if (provider?.name === 'Google' && baseModel.includes('gemini')) {
+      const geminiModels = currentProviderModels.filter(m => {
+        const modelName = typeof m === 'string' ? m : m.name;
+        return modelName.toLowerCase().includes('gemini');
+      });
+
+      return geminiModels.map(m => {
+        const modelInfo = typeof m === 'string' ? { name: m, label: m } : m;
+        let icon = 'i-ph:sparkle';
+        let color = 'text-blue-500';
+        let description = 'Modelo Gemini';
+
+        if (modelInfo.name.includes('flash')) {
+          icon = 'i-ph:lightning';
+          color = 'text-yellow-500';
+          description = 'Versão Flash - Rápida';
+        } else if (modelInfo.name.includes('pro')) {
+          icon = 'i-ph:crown';
+          color = 'text-purple-500';
+          description = 'Versão Pro - Potente';
+        } else if (modelInfo.name.includes('thinking')) {
+          icon = 'i-ph:brain';
+          color = 'text-green-500';
+          description = 'Versão Thinking - Reflexiva';
+        }
+
+        return {
+          name: modelInfo.name,
+          label: modelInfo.label || modelInfo.name,
+          description,
+          icon,
+          color
+        };
+      });
+    }
+
+    // Para Anthropic Claude, mostrar modelos reais disponíveis
+    if (provider?.name === 'Anthropic' && baseModel.toLowerCase().includes('claude')) {
+      const claudeModels = currentProviderModels.filter(m => {
+        const modelName = typeof m === 'string' ? m : m.name;
+        return modelName.toLowerCase().includes('claude');
+      });
+
+      return claudeModels.map(m => {
+        const modelInfo = typeof m === 'string' ? { name: m, label: m } : m;
+        let icon = 'i-ph:sparkle';
+        let color = 'text-blue-500';
+        let description = 'Modelo Claude';
+
+        if (modelInfo.name.includes('haiku')) {
+          icon = 'i-ph:feather';
+          color = 'text-cyan-500';
+          description = 'Versão Haiku - Leve';
+        } else if (modelInfo.name.includes('sonnet')) {
+          icon = 'i-ph:scales';
+          color = 'text-indigo-500';
+          description = 'Versão Sonnet - Balanceada';
+        } else if (modelInfo.name.includes('opus')) {
+          icon = 'i-ph:crown';
+          color = 'text-yellow-500';
+          description = 'Versão Opus - Mais Potente';
+        }
+
+        return {
+          name: modelInfo.name,
+          label: modelInfo.label || modelInfo.name,
+          description,
+          icon,
+          color
+        };
+      });
+    }
+
+    // Para outros providers, mostrar os modelos reais disponíveis
+    const relatedModels = currentProviderModels.filter(m => {
+      const modelName = typeof m === 'string' ? m : m.name;
+      return modelName.toLowerCase().includes(baseModel.toLowerCase()) || modelName === baseModel;
+    });
+
+    if (relatedModels.length > 0) {
+      return relatedModels.map(m => {
+        const modelInfo = typeof m === 'string' ? { name: m, label: m } : m;
+        return {
+          name: modelInfo.name,
+          label: modelInfo.label || modelInfo.name,
+          description: `Modelo ${provider?.name || 'Disponível'}`,
+          icon: 'i-ph:sparkle',
+          color: 'text-blue-500'
+        };
+      });
+    }
+
+    // Fallback: retornar o modelo base
+    return [
+      {
+        name: baseModel,
+        label: baseModel,
+        description: 'Modelo Base',
+        icon: 'i-ph:sparkle',
+        color: 'text-blue-500'
+      }
+    ];
+  };
+
+
+
+  // Debug log para verificar estado atual
   useEffect(() => {
-    console.log('AgentMenu - Provider:', provider?.name);
-    console.log('AgentMenu - Models:', modelNames);
-    console.log('AgentMenu - Current model:', model);
-  }, [provider, modelNames, model]);
+    console.log('=== AgentMenu Debug ===');
+    console.log('View Mode:', viewMode);
+    console.log('Provider:', provider?.name);
+    console.log('Provider Models:', currentProviderModels);
+    console.log('Model Names:', modelNames);
+    console.log('Current model:', model);
+    console.log('=====================');
+  }, [viewMode, provider, currentProviderModels, modelNames, model]);
 
   return (
     <>
@@ -67,7 +200,7 @@ export const AgentMenu: React.FC<AgentMenuProps> = ({
             'flex items-center text-bolt-elements-item-contentDefault bg-transparent enabled:hover:text-bolt-elements-item-contentActive rounded-md p-1 enabled:hover:bg-bolt-elements-item-backgroundActive disabled:cursor-not-allowed focus:outline-none',
             className
           )}
-          title={`Provider: ${provider?.name || 'None'} | Model: ${model || 'None'}`}
+          title={`${provider?.name || 'Nenhum Provider'} → ${model || 'Nenhum Modelo'}`}
         >
           <div className="i-ph:robot text-xl" />
         </DropdownMenu.Trigger>
@@ -85,107 +218,149 @@ export const AgentMenu: React.FC<AgentMenuProps> = ({
             sideOffset={5}
             align="start"
           >
-            <div className="px-2 py-1 text-xs text-bolt-elements-textTertiary font-medium">Providers</div>
-            {providerList && providerList.length > 0 ? (
-              providerList.map((p) => (
-                <DropdownMenu.Item
-                  key={p.name}
-                  className={classNames(
-                    'relative flex items-center gap-2 px-3 py-2 rounded-lg text-sm',
-                    'text-bolt-elements-textPrimary hover:text-bolt-elements-textPrimary',
-                    'hover:bg-bolt-elements-background-depth-3',
-                    'transition-colors cursor-pointer',
-                    'outline-none',
-                    provider?.name === p.name ? 'bg-bolt-elements-item-backgroundAccent text-bolt-elements-item-contentAccent' : ''
-                  )}
-                  onSelect={() => setProvider(p)}
-                >
-                  <div className="i-ph:cpu text-base" />
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium">{p.name}</span>
-                    {provider?.name === p.name && <span className="text-xs opacity-75">Selecionado</span>}
-                  </div>
-                </DropdownMenu.Item>
-              ))
-            ) : (
-              <div className="px-3 py-2 text-xs text-bolt-elements-textTertiary">Nenhum provider disponível</div>
+            {/* Header com navegação */}
+            <div className="flex items-center gap-2 px-2 py-1 mb-2">
+              {viewMode !== 'providers' && (
+                <button
+                  onClick={handleBack}
+                  className="i-ph:arrow-left text-sm text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary transition-colors"
+                  title="Voltar"
+                />
+              )}
+              <div className="text-xs text-bolt-elements-textTertiary font-medium flex-1">
+                {viewMode === 'providers' && 'Providers'}
+                {viewMode === 'models' && `${provider?.name} - Modelos`}
+              </div>
+            </div>
+
+            {/* Visualização de Providers */}
+            {viewMode === 'providers' && (
+              <>
+                {providerList && providerList.length > 0 ? (
+                  providerList.map((p) => (
+                    <DropdownMenu.Item
+                      key={p.name}
+                      className={classNames(
+                        'relative flex items-center gap-2 px-3 py-2 rounded-lg text-sm',
+                        'text-bolt-elements-textPrimary hover:text-bolt-elements-textPrimary',
+                        'hover:bg-bolt-elements-background-depth-3',
+                        'transition-colors cursor-pointer',
+                        'outline-none',
+                        provider?.name === p.name ? 'bg-bolt-elements-item-backgroundAccent text-bolt-elements-item-contentAccent' : ''
+                      )}
+                      onSelect={() => handleProviderSelect(p)}
+                    >
+                      <div className="i-ph:cpu text-base" />
+                      <div className="flex flex-col flex-1">
+                        <span className="text-sm font-medium">{p.name}</span>
+                        {provider?.name === p.name && <span className="text-xs opacity-75">Selecionado</span>}
+                      </div>
+                      <div className="i-ph:caret-right text-xs" />
+                    </DropdownMenu.Item>
+                  ))
+                ) : (
+                  <div className="px-3 py-2 text-xs text-bolt-elements-textTertiary">Nenhum provider disponível</div>
+                )}
+              </>
             )}
 
-            {modelNames.length > 0 && (
+            {/* Visualização de Modelos */}
+            {viewMode === 'models' && currentProviderModels.length > 0 && (
               <>
-                <DropdownMenu.Separator className="h-px bg-bolt-elements-borderColor my-1" />
-                <div className="px-2 py-1 text-xs text-bolt-elements-textTertiary font-medium">Modelos</div>
-                {modelNames.slice(0, 8).map((m) => {
-                  // Versões disponíveis para cada modelo
-                  const modelVersions = [
-                    { name: m, label: m, description: 'Versão Padrão', icon: 'i-ph:sparkle', color: 'text-blue-500' },
-                    { name: `${m}-turbo`, label: `${m} Turbo`, description: 'Versão Rápida', icon: 'i-ph:lightning', color: 'text-yellow-500' },
-                    { name: `${m}-precise`, label: `${m} Precise`, description: 'Versão Precisa', icon: 'i-ph:target', color: 'text-green-500' }
-                  ];
+                {currentProviderModels.slice(0, 12).map((m) => {
+                  const modelInfo = typeof m === 'string' ? { name: m, label: m } : m;
+                  let icon = 'i-ph:brain';
+                  let color = 'text-blue-500';
+                  let description = '';
+
+                  // Ícones e descrições específicas baseadas no nome do modelo
+                  if (modelInfo.name.includes('flash')) {
+                    icon = 'i-ph:lightning';
+                    color = 'text-yellow-500';
+                    description = 'Rápido e eficiente';
+                  } else if (modelInfo.name.includes('pro')) {
+                    icon = 'i-ph:crown';
+                    color = 'text-purple-500';
+                    description = 'Versão profissional';
+                  } else if (modelInfo.name.includes('haiku')) {
+                    icon = 'i-ph:feather';
+                    color = 'text-cyan-500';
+                    description = 'Leve e rápido';
+                  } else if (modelInfo.name.includes('sonnet')) {
+                    icon = 'i-ph:scales';
+                    color = 'text-indigo-500';
+                    description = 'Balanceado';
+                  } else if (modelInfo.name.includes('opus')) {
+                    icon = 'i-ph:crown';
+                    color = 'text-yellow-500';
+                    description = 'Mais potente';
+                  } else if (modelInfo.name.includes('thinking')) {
+                    icon = 'i-ph:brain';
+                    color = 'text-green-500';
+                    description = 'Versão reflexiva';
+                  }
 
                   return (
-                    <React.Fragment key={`model-group-${m}`}>
-                      {/* Cabeçalho do modelo */}
-                      <div className="px-2 py-1 text-xs font-semibold text-bolt-elements-textSecondary bg-bolt-elements-background-depth-3 rounded-md mx-1 my-1">
-                        {m}
+                    <DropdownMenu.Item
+                      key={modelInfo.name}
+                      className={classNames(
+                        'relative flex items-center gap-2 px-3 py-2 rounded-lg text-sm',
+                        'text-bolt-elements-textPrimary hover:text-bolt-elements-textPrimary',
+                        'hover:bg-bolt-elements-background-depth-3',
+                        'transition-colors cursor-pointer',
+                        'outline-none focus:outline-none',
+                        'data-[highlighted]:bg-bolt-elements-background-depth-3',
+                        model === modelInfo.name ? 'bg-bolt-elements-item-backgroundAccent text-bolt-elements-item-contentAccent' : ''
+                      )}
+                      onSelect={() => {
+                        setModel(modelInfo.name);
+                        setViewMode('providers'); // Voltar para providers após seleção
+                        console.log(`Selected model: ${modelInfo.name}`);
+                      }}
+                    >
+                      <div className={`${icon} text-base ${color}`} />
+                      <div className="flex flex-col flex-1">
+                        <span className="text-sm font-medium">{modelInfo.label || modelInfo.name}</span>
+                        {description && <span className="text-xs text-bolt-elements-textTertiary">{description}</span>}
                       </div>
-
-                      {/* Versões do modelo */}
-                      {modelVersions.map((version) => (
-                        <DropdownMenu.Item
-                          key={version.name}
-                          className={classNames(
-                            'relative flex items-center gap-2 px-3 py-2 rounded-lg text-sm ml-2',
-                            'text-bolt-elements-textPrimary hover:text-bolt-elements-textPrimary',
-                            'hover:bg-bolt-elements-background-depth-3',
-                            'transition-colors cursor-pointer',
-                            'outline-none focus:outline-none',
-                            'data-[highlighted]:bg-bolt-elements-background-depth-3',
-                            model === version.name ? 'bg-bolt-elements-item-backgroundAccent text-bolt-elements-item-contentAccent' : ''
-                          )}
-                          onSelect={() => {
-                            setModel(version.name);
-                            console.log(`Selected: ${version.name}`);
-                          }}
-                        >
-                          <div className={`${version.icon} text-base ${version.color}`} />
-                          <div className="flex flex-col flex-1">
-                            <span className="text-sm font-medium">{version.label}</span>
-                            <span className="text-xs text-bolt-elements-textTertiary">{version.description}</span>
-                          </div>
-                          {model === version.name && <div className="i-ph:check text-xs" />}
-                        </DropdownMenu.Item>
-                      ))}
-                    </React.Fragment>
+                      {model === modelInfo.name && <div className="i-ph:check text-xs" />}
+                    </DropdownMenu.Item>
                   );
                 })}
-                {modelNames.length > 8 && (
+                {currentProviderModels.length > 12 && (
                   <div className="px-3 py-1 text-xs text-bolt-elements-textTertiary">
-                    +{modelNames.length - 8} mais modelos
+                    +{currentProviderModels.length - 12} mais modelos
                   </div>
                 )}
               </>
             )}
 
-            <DropdownMenu.Separator className="h-px bg-bolt-elements-borderColor my-1" />
-            <DropdownMenu.Item
-              className={classNames(
-                'relative flex items-center gap-2 px-3 py-2 rounded-lg text-sm',
-                'text-bolt-elements-textPrimary hover:text-bolt-elements-textPrimary',
-                'hover:bg-bolt-elements-background-depth-3',
-                'transition-colors cursor-pointer',
-                'outline-none'
-              )}
-              onSelect={() => setIsKeyDialogOpen(true)}
-            >
-              <div className="i-ph:key text-base" />
-              <div className="flex-1">
-                <div className="text-sm font-medium">Configurar API Key</div>
-                <div className="text-xs text-bolt-elements-textTertiary">
-                  {provider?.name ? (apiKeys[provider.name] ? 'Configurada ✓' : 'Não configurada') : 'Selecione um provider'}
-                </div>
-              </div>
-            </DropdownMenu.Item>
+
+
+            {/* Seção API Key (apenas na tela de providers) */}
+            {viewMode === 'providers' && (
+              <>
+                <DropdownMenu.Separator className="h-px bg-bolt-elements-borderColor my-1" />
+                <DropdownMenu.Item
+                  className={classNames(
+                    'relative flex items-center gap-2 px-3 py-2 rounded-lg text-sm',
+                    'text-bolt-elements-textPrimary hover:text-bolt-elements-textPrimary',
+                    'hover:bg-bolt-elements-background-depth-3',
+                    'transition-colors cursor-pointer',
+                    'outline-none'
+                  )}
+                  onSelect={() => setIsKeyDialogOpen(true)}
+                >
+                  <div className="i-ph:key text-base" />
+                  <div className="flex-1">
+                    <div className="text-sm font-medium">Configurar API Key</div>
+                    <div className="text-xs text-bolt-elements-textTertiary">
+                      {provider?.name ? (apiKeys[provider.name] ? 'Configurada ✓' : 'Não configurada') : 'Selecione um provider'}
+                    </div>
+                  </div>
+                </DropdownMenu.Item>
+              </>
+            )}
           </DropdownMenu.Content>
         </DropdownMenu.Portal>
       </DropdownMenu.Root>
