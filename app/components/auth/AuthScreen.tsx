@@ -240,7 +240,8 @@ export function AuthScreen({
 
           <Button
             type="submit"
-            className="w-full text-white bg-gradient-to-r from-[#FF7C3F] via-[#FF4C7D] to-[#A24CFF] hover:brightness-110 focus-visible:ring-0 border-none"
+            style={{ backgroundImage: 'var(--bolt-elements-gradient-primary)' }}
+            className="w-full text-white hover:brightness-110 focus-visible:ring-0 border-none"
             disabled={isSubmitting}
           >
             {isSubmitting ? (
