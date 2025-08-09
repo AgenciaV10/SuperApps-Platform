@@ -1,10 +1,6 @@
 import React from 'react';
 import { ClientOnly } from 'remix-utils/client-only';
 import { classNames } from '~/utils/classNames';
-import { PROVIDER_LIST } from '~/utils/constants';
-import { ModelSelector } from '~/components/chat/ModelSelector';
-import { APIKeyManager } from './APIKeyManager';
-import { LOCAL_PROVIDERS } from '~/lib/stores/settings';
 import FilePreview from './FilePreview';
 import { ScreenshotStateManager } from './ScreenshotStateManager';
 import { SendButton } from './SendButton.client';
@@ -15,10 +11,10 @@ import { SupabaseConnection } from './SupabaseConnection';
 import { ExpoQrModal } from '~/components/workbench/ExpoQrModal';
 import styles from './BaseChat.module.scss';
 import type { ProviderInfo } from '~/types/model';
-import { ColorSchemeDialog } from '~/components/ui/ColorSchemeDialog';
 import type { DesignScheme } from '~/types/design-scheme';
 import type { ElementInfo } from '~/components/workbench/Inspector';
-import { McpTools } from './MCPTools';
+import { AgentMenu } from './AgentMenu';
+import { ModelSettingsMenu } from './ModelSettingsMenu';
 
 export interface ChatBoxProps {
   isModelSettingsCollapsed: boolean;
@@ -95,36 +91,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
         <rect className={classNames(styles.PromptEffectLine)} pathLength="100" strokeLinecap="round"></rect>
         <rect className={classNames(styles.PromptShine)} x="48" y="24" width="70" height="1"></rect>
       </svg>
-      <div>
-        <ClientOnly>
-          {() => (
-            <div className={props.isModelSettingsCollapsed ? 'hidden' : ''}>
-              <ModelSelector
-                key={props.provider?.name + ':' + props.modelList.length}
-                model={props.model}
-                setModel={props.setModel}
-                modelList={props.modelList}
-                provider={props.provider}
-                setProvider={props.setProvider}
-                providerList={props.providerList || (PROVIDER_LIST as ProviderInfo[])}
-                apiKeys={props.apiKeys}
-                modelLoading={props.isModelLoading}
-              />
-              {(props.providerList || []).length > 0 &&
-                props.provider &&
-                (!LOCAL_PROVIDERS.includes(props.provider.name) || 'OpenAILike') && (
-                  <APIKeyManager
-                    provider={props.provider}
-                    apiKey={props.apiKeys[props.provider.name] || ''}
-                    setApiKey={(key) => {
-                      props.onApiKeysChange(props.provider.name, key);
-                    }}
-                  />
-                )}
-            </div>
-          )}
-        </ClientOnly>
-      </div>
+      {/* ModelSelector/APIKeyManager removidos: gerenciamento via AgentMenu + ModelSettingsMenu */}
       <FilePreview
         files={props.uploadedFiles}
         imageDataList={props.imageDataList}
@@ -238,9 +205,13 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
         <ClientOnly>
           {() => (
             <SendButton
-              show={props.input.length > 0 || props.isStreaming || props.uploadedFiles.length > 0}
+              show={true}
               isStreaming={props.isStreaming}
-              disabled={!props.providerList || props.providerList.length === 0}
+              disabled={
+                !props.providerList ||
+                props.providerList.length === 0 ||
+                (!props.isStreaming && props.input.length === 0 && props.uploadedFiles.length === 0)
+              }
               onClick={(event) => {
                 if (props.isStreaming) {
                   props.handleStop?.();
@@ -256,8 +227,19 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
         </ClientOnly>
         <div className="flex justify-between items-center text-sm p-4 pt-2">
           <div className="flex gap-1 items-center">
-            <ColorSchemeDialog designScheme={props.designScheme} setDesignScheme={props.setDesignScheme} />
-            <McpTools />
+            {props.providerList?.length ? (
+              <AgentMenu
+                provider={props.provider as any}
+                providerList={(props.providerList as any[]) || []}
+                model={props.model as any}
+                modelList={(props.modelList as any[]) || []}
+                setProvider={props.setProvider as any}
+                setModel={props.setModel as any}
+                apiKeys={props.apiKeys}
+                onApiKeysChange={props.onApiKeysChange}
+                className={classNames(styles.ChatIconButton)}
+              />
+            ) : null}
             <IconButton
               title="Upload file"
               className={classNames('transition-all', styles.ChatIconButton)}
@@ -265,25 +247,18 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
             >
               <div className="i-ph:paperclip text-xl"></div>
             </IconButton>
-            <IconButton
-              title="Enhance prompt"
-              disabled={props.input.length === 0 || props.enhancingPrompt}
-              className={classNames(
-                'transition-all',
-                styles.ChatIconButton,
-                props.enhancingPrompt ? 'opacity-100' : '',
-              )}
-              onClick={() => {
+            <ModelSettingsMenu
+              onTogglePanel={() => props.setIsModelSettingsCollapsed(!props.isModelSettingsCollapsed)}
+              canEnhance={props.input.length > 0 && !props.enhancingPrompt}
+              onEnhance={() => {
                 props.enhancePrompt?.();
                 toast.success('Prompt enhanced!');
               }}
-            >
-              {props.enhancingPrompt ? (
-                <div className="i-svg-spinners:90-ring-with-bg text-bolt-elements-loader-progress text-xl animate-spin"></div>
-              ) : (
-                <div className="i-bolt:stars text-xl"></div>
-              )}
-            </IconButton>
+              enhancingPrompt={props.enhancingPrompt}
+              designScheme={props.designScheme as any}
+              setDesignScheme={props.setDesignScheme as any}
+              className={classNames(styles.ChatIconButton)}
+            />
 
             <SpeechRecognitionButton
               isListening={props.isListening}
@@ -309,20 +284,6 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                 {props.chatMode === 'discuss' ? <span>Discuss</span> : <span />}
               </IconButton>
             )}
-            <IconButton
-              title="Model Settings"
-              className={classNames('transition-all flex items-center gap-1', styles.ChatIconButton, {
-                'bg-bolt-elements-item-backgroundAccent text-bolt-elements-item-contentAccent':
-                  props.isModelSettingsCollapsed,
-                'bg-bolt-elements-item-backgroundDefault text-bolt-elements-item-contentDefault':
-                  !props.isModelSettingsCollapsed,
-              })}
-              onClick={() => props.setIsModelSettingsCollapsed(!props.isModelSettingsCollapsed)}
-              disabled={!props.providerList || props.providerList.length === 0}
-            >
-              <div className={`i-ph:caret-${props.isModelSettingsCollapsed ? 'right' : 'down'} text-lg`} />
-              {props.isModelSettingsCollapsed ? <span className="text-xs">{props.model}</span> : <span />}
-            </IconButton>
           </div>
           {props.input.length > 3 ? (
             <div className="text-xs text-bolt-elements-textTertiary">
