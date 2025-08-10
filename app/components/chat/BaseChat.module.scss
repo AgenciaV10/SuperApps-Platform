@@ -180,3 +180,28 @@
 .ChatIconButton:focus-visible::after {
   opacity: 1;
 }
+
+/* Estilos para scrollbar customizada no AgentMenu */
+.AgentMenuScrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--bolt-elements-borderColor) var(--bolt-elements-background-depth-3);
+}
+
+.AgentMenuScrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.AgentMenuScrollbar::-webkit-scrollbar-track {
+  background: var(--bolt-elements-background-depth-3);
+  border-radius: 3px;
+}
+
+.AgentMenuScrollbar::-webkit-scrollbar-thumb {
+  background: var(--bolt-elements-borderColor);
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+.AgentMenuScrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--bolt-elements-textSecondary);
+}
