@@ -4,6 +4,7 @@ import { IconButton } from '~/components/ui/IconButton';
 import { classNames } from '~/utils/classNames';
 import type { ProviderInfo } from '~/types/model';
 import { Dialog, DialogTitle, DialogDescription, DialogRoot, DialogClose } from '~/components/ui/Dialog';
+import styles from './BaseChat.module.scss';
 
 export interface AgentMenuProps {
   provider: ProviderInfo | undefined;
@@ -214,7 +215,9 @@ export const AgentMenu: React.FC<AgentMenuProps> = ({
                     'shadow-lg',
                     'animate-in fade-in-80 zoom-in-95',
                     'z-[99999] relative',
-                    'max-h-[400px] overflow-y-auto', // Adicionar scroll
+                    'max-h-[400px] overflow-y-auto',
+                    // Aplicar scrollbar customizada
+                    styles.AgentMenuScrollbar,
                   )}
                   sideOffset={5}
                   align="start"
@@ -287,7 +290,7 @@ export const AgentMenu: React.FC<AgentMenuProps> = ({
                 )}
                 {currentProviderModels.length > 0 && (
               <>
-                {currentProviderModels.slice(0, 12).map((m) => {
+                {currentProviderModels.map((m) => {
                   const modelInfo = typeof m === 'string' ? { name: m, label: m } : m;
                   let icon = 'i-ph:brain';
                   let color = 'text-blue-500';
@@ -348,11 +351,6 @@ export const AgentMenu: React.FC<AgentMenuProps> = ({
                     </DropdownMenu.Item>
                   );
                 })}
-                {currentProviderModels.length > 12 && (
-                  <div className="px-3 py-1 text-xs text-bolt-elements-textTertiary">
-                    +{currentProviderModels.length - 12} mais modelos
-                  </div>
-                )}
               </>
                 )}
               </>
