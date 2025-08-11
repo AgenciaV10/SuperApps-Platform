@@ -189,16 +189,11 @@ function ModernThemeSwitch() {
       aria-label="Alternar tema"
       type="button"
     >
-      {/* logos dos modos */}
-      <span className="absolute left-1.5 md:left-2 flex items-center gap-1 text-[10px] md:text-xs text-gray-700 dark:hidden">
-        <span className="i-ph:moon-stars-duotone" />
-        <span>Dark</span>
+      <span className="pointer-events-none inline-flex items-center justify-center h-5 w-5 md:h-6 md:w-6 translate-x-1 rounded-full bg-white shadow-md transition-transform dark:translate-x-7 md:dark:translate-x-8">
+        {/* Ícones dentro do knob (sempre visíveis) */}
+        <span className="i-ph:sun-dim-duotone text-yellow-400 text-[13px] md:text-sm dark:hidden" />
+        <span className="i-ph:moon-stars-duotone text-gray-700 text-[13px] md:text-sm hidden dark:inline" />
       </span>
-      <span className="absolute right-1.5 md:right-2 hidden dark:flex items-center gap-1 text-[10px] md:text-xs text-yellow-300">
-        <span className="i-ph:sun-dim-duotone" />
-        <span>Light</span>
-      </span>
-      <span className="pointer-events-none inline-block h-5 w-5 md:h-6 md:w-6 translate-x-1 rounded-full bg-white shadow-md transition-transform dark:translate-x-7 md:dark:translate-x-8" />
     </button>
   );
 }
