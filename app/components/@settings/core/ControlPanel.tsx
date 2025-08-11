@@ -8,6 +8,7 @@ import { useNotifications } from '~/lib/hooks/useNotifications';
 import { useConnectionStatus } from '~/lib/hooks/useConnectionStatus';
 import { tabConfigurationStore, resetTabConfiguration } from '~/lib/stores/settings';
 import { profileStore } from '~/lib/stores/profile';
+import { useHydrateProfile } from '~/lib/hooks/useHydrateProfile';
 import type { TabType, Profile } from './types';
 import { TAB_LABELS, DEFAULT_TAB_CONFIG, TAB_DESCRIPTIONS } from './constants';
 import { DialogTitle } from '~/components/ui/Dialog';
@@ -42,6 +43,8 @@ const BetaLabel = () => (
 );
 
 export const ControlPanel = ({ open, onClose }: ControlPanelProps) => {
+  // Hidrata o perfil quando o painel abre
+  useHydrateProfile();
   // State
   const [activeTab, setActiveTab] = useState<TabType | null>(null);
   const [loadingTab, setLoadingTab] = useState<TabType | null>(null);

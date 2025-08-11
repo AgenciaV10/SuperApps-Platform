@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useStore } from '@nanostores/react';
 import { classNames } from '~/utils/classNames';
 import { profileStore } from '~/lib/stores/profile';
+import { useHydrateProfile } from '~/lib/hooks/useHydrateProfile';
 import type { TabType, Profile } from './types';
 
 const BetaLabel = () => (
@@ -16,6 +17,7 @@ interface AvatarDropdownProps {
 }
 
 export const AvatarDropdown = ({ onSelectTab }: AvatarDropdownProps) => {
+  useHydrateProfile();
   const profile = useStore(profileStore) as Profile;
 
   return (
