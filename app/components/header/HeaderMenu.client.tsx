@@ -45,7 +45,8 @@ export function HeaderMenu() {
             title="Meus Projetos"
           >
             <span className="i-ph:folders text-base" />
-            <span className="text-sm font-medium">Meus Projetos</span>
+            <span className="text-sm font-medium hidden sm:inline">Meus Projetos</span>
+            <span className="text-sm font-medium sm:hidden">Projetos</span>
           </button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Content
