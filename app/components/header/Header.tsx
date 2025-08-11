@@ -103,13 +103,20 @@ function ModernThemeSwitch() {
   return (
     <button
       onClick={() => toggleTheme()}
-      className="relative inline-flex h-8 w-14 items-center rounded-full bg-black/10 dark:bg-white/10 border border-black/10 dark:border-white/15 hover:brightness-110 transition-colors"
+      className="relative inline-flex h-8 w-16 items-center rounded-full bg-black/10 dark:bg-white/10 border border-black/15 dark:border-white/15 hover:brightness-110 transition-colors overflow-hidden"
       aria-label="Alternar tema"
       type="button"
     >
-      <span className="absolute left-1 i-ph:moon-stars-duotone text-gray-700 dark:hidden" />
-      <span className="absolute right-1 i-ph:sun-dim-duotone text-yellow-300 hidden dark:inline" />
-      <span className="pointer-events-none inline-block h-6 w-6 translate-x-1 rounded-full bg-white shadow-md transition-transform dark:translate-x-7" />
+      {/* logos dos modos */}
+      <span className="absolute left-2 flex items-center gap-1 text-xs text-gray-700 dark:hidden">
+        <span className="i-ph:moon-stars-duotone" />
+        <span>Dark</span>
+      </span>
+      <span className="absolute right-2 hidden dark:flex items-center gap-1 text-xs text-yellow-300">
+        <span className="i-ph:sun-dim-duotone" />
+        <span>Light</span>
+      </span>
+      <span className="pointer-events-none inline-block h-6 w-6 translate-x-1 rounded-full bg-white shadow-md transition-transform dark:translate-x-8" />
     </button>
   );
 }

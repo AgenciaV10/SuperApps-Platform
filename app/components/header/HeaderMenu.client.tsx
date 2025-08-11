@@ -35,8 +35,12 @@ export function HeaderMenu() {
             type="button"
             className={classNames(
               'px-4 h-9 rounded-full flex items-center gap-2',
-              'bg-black/90 dark:bg-black text-white font-medium',
-              'border border-white/10 hover:bg-white/10 transition-colors',
+              // Light: manter fundo escuro p/ contraste; Dark: mantém escuro
+              'bg-black text-white font-medium',
+              // Bordas por tema para não sumir
+              'border border-black/50 dark:border-white/10',
+              // Hover por tema: não clarear no light
+              'hover:bg-black/80 dark:hover:bg-white/10 transition-colors',
             )}
             title="Meus Projetos"
           >
