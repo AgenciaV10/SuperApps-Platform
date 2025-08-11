@@ -4,10 +4,14 @@ import { classNames } from '~/utils/classNames';
 import { profileStore, updateProfile } from '~/lib/stores/profile';
 import { toast } from 'react-toastify';
 import { debounce } from '~/utils/debounce';
+import { getSupabaseClient } from '~/lib/supabase/client';
 
 export default function ProfileTab() {
   const profile = useStore(profileStore);
   const [isUploading, setIsUploading] = useState(false);
+  const [pwd, setPwd] = useState('');
+  const [pwd2, setPwd2] = useState('');
+  const [updatingPwd, setUpdatingPwd] = useState(false);
 
   // Create debounced update functions
   const debouncedUpdate = useCallback(
@@ -57,6 +61,42 @@ export default function ProfileTab() {
 
     // Debounce the toast notification
     debouncedUpdate(field, value);
+  };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (updatingPwd) return;
+    const newPassword = pwd.trim();
+    const confirmPassword = pwd2.trim();
+    if (!newPassword || !confirmPassword) {
+      toast.error('Preencha a nova senha e a confirmação');
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error('A senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error('As senhas não coincidem');
+      return;
+    }
+    try {
+      setUpdatingPwd(true);
+      const supabase = getSupabaseClient();
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        toast.error('Falha ao atualizar a senha. Tente novamente.');
+        return;
+      }
+      setPwd('');
+      setPwd2('');
+      toast.success('Senha atualizada com sucesso');
+    } catch (err) {
+      console.error('Password update error:', err);
+      toast.error('Erro inesperado ao atualizar a senha');
+    } finally {
+      setUpdatingPwd(false);
+    }
   };
 
   return (
@@ -175,6 +215,72 @@ export default function ProfileTab() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Security / Change Password */}
+      <div className="mt-10 pt-6 border-t border-gray-200 dark:border-gray-700/50">
+        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Alterar senha</h3>
+        <form onSubmit={handlePasswordChange} className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl">
+          <div>
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Nova senha</label>
+            <input
+              type="password"
+              value={pwd}
+              onChange={(e) => setPwd(e.target.value)}
+              className={classNames(
+                'w-full px-3 py-2 rounded-xl',
+                'bg-white dark:bg-gray-800/50',
+                'border border-gray-200 dark:border-gray-700/50',
+                'text-gray-900 dark:text-white',
+                'placeholder-gray-400 dark:placeholder-gray-500',
+                'focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50',
+              )}
+              placeholder="Digite a nova senha"
+              autoComplete="new-password"
+              disabled={updatingPwd}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Confirmar nova senha</label>
+            <input
+              type="password"
+              value={pwd2}
+              onChange={(e) => setPwd2(e.target.value)}
+              className={classNames(
+                'w-full px-3 py-2 rounded-xl',
+                'bg-white dark:bg-gray-800/50',
+                'border border-gray-200 dark:border-gray-700/50',
+                'text-gray-900 dark:text-white',
+                'placeholder-gray-400 dark:placeholder-gray-500',
+                'focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50',
+              )}
+              placeholder="Confirme a nova senha"
+              autoComplete="new-password"
+              disabled={updatingPwd}
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <button
+              type="submit"
+              disabled={updatingPwd}
+              className={classNames(
+                'inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm text-white',
+                'border border-transparent',
+                'transition-colors',
+              )}
+              style={{ backgroundImage: 'var(--bolt-elements-gradient-primary)' }}
+            >
+              {updatingPwd ? (
+                <>
+                  <span className="i-ph:circle-notch animate-spin" />
+                  Atualizando...
+                </>
+              ) : (
+                'Atualizar senha'
+              )}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
