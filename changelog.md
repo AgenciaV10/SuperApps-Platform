@@ -55,6 +55,18 @@ Data: 2025-08-11
 - Acessibilidade: estados de foco e navegação por teclado mais consistentes nos dropdowns.
 - Otimizações de bundle para reduzir o chunk do header (code-splitting quando oportuno).
 
+### Correções Críticas de Layout (2025-01-27)
+- **🔧 Correção do fluxo Chat → Workbench**: Resolvido problema crítico onde as respostas do chat eram exibidas no próprio campo de input ao invés de mostrar a interface de criação do app (Workbench).
+- **📱 Estrutura de Container Restaurada**: Adicionado de volta o container wrapper necessário (`relative w-full max-w-chat mx-auto z-prompt`) no ChatBox que havia sido removido durante a reestruturação para o design da Lovable.
+- **🔄 Navegação Funcional**: O fluxo normal de criação de projetos foi restaurado:
+  1. Usuário envia mensagem → `handleSendMessage`
+  2. IA processa e gera artefatos → `useMessageParser`
+  3. Parser detecta artefato → `onArtifactOpen`
+  4. Define `showWorkbench = true` → `workbenchStore.showWorkbench.set(true)`
+  5. BaseChat renderiza Workbench → Interface de criação aparece corretamente
+- **✅ Build Validado**: Todas as correções foram testadas e validadas com build bem-sucedido.
+- **🎯 Impacto**: Solução restaura completamente a funcionalidade de criação de apps sem afetar o novo design moderno da Lovable implementado.
+
 # 🚀 Release v1.0.0
 
 ## What's Changed 🌟
