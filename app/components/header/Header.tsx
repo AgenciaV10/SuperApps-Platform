@@ -59,8 +59,10 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { ThemeSwitch } from '~/components/ui/ThemeSwitch';
 import { toggleTheme } from '~/lib/stores/theme';
 import { useUserProfile } from '~/lib/hooks/useUserProfile';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { getSupabaseClient } from '~/lib/supabase/client';
 import { ControlPanel } from '~/components/@settings/core/ControlPanel';
+import { AuthScreen } from '~/components/auth/AuthScreen';
 
 function ThemeToggler() {
   return (
@@ -73,10 +75,36 @@ function ThemeToggler() {
 function UserMenu() {
   const { isAuthenticated, loading, displayName, email, avatarUrl, initials, signOut } = useUserProfile();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [planName, setPlanName] = useState<string>('');
+  const [planLoading, setPlanLoading] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchPlan = async () => {
+      if (!isAuthenticated || !isOpen || planName) return;
+      try {
+        setPlanLoading(true);
+        const supabase = getSupabaseClient();
+        const { data } = await supabase.auth.getSession();
+        const userId = data.session?.user?.id;
+        if (!userId) return;
+        const { data: row } = await supabase.from('users').select('plan_id').eq('id', userId).maybeSingle();
+        const normalized = String((row as any)?.plan_id || '').toLowerCase();
+        let label = 'Free';
+        if (normalized.includes('pro')) label = 'Pro';
+        if (normalized.includes('enterprise') || normalized.includes('empresa')) label = 'Empresas';
+        setPlanName(label);
+      } finally {
+        setPlanLoading(false);
+      }
+    };
+    fetchPlan();
+  }, [isAuthenticated, isOpen, planName]);
 
   return (
     <>
-      <DropdownMenu.Root>
+      <DropdownMenu.Root open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenu.Trigger asChild>
           <button
             className="flex items-center gap-2 h-10 pl-2 pr-3 rounded-full text-white border border-white/10 hover:brightness-110"
@@ -90,15 +118,37 @@ function UserMenu() {
             <span className="text-sm font-medium">{isAuthenticated ? displayName || email || 'Usuário' : 'Login/Cadastro'}</span>
           </button>
         </DropdownMenu.Trigger>
-        <DropdownMenu.Content className="min-w-[260px] rounded-lg p-2 bg-white text-gray-900 dark:bg-bolt-elements-background-depth-2 dark:text-bolt-elements-textPrimary border border-black/10 dark:border-bolt-elements-borderColor shadow-xl z-[99999]">
+        <DropdownMenu.Content className="min-w-[280px] rounded-lg p-2 bg-white text-gray-900 dark:bg-bolt-elements-background-depth-2 dark:text-bolt-elements-textPrimary border border-black/10 dark:border-bolt-elements-borderColor shadow-xl z-[99999]">
           {isAuthenticated ? (
             <>
-              <div className="px-3 py-2 text-xs text-gray-500 dark:text-bolt-elements-textTertiary">
-                {displayName || 'Usuário'}{email ? ` • ${email}` : ''}
+              <div className="px-3 py-2 flex items-center gap-3">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt={displayName || 'User'} className="h-8 w-8 rounded-full object-cover" />
+                ) : (
+                  <div className="h-8 w-8 rounded-full bg-black/10 dark:bg-white/10 flex items-center justify-center font-semibold">
+                    {initials}
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <div className="text-sm font-medium truncate">{displayName || 'Usuário'}</div>
+                  {email && <div className="text-xs text-gray-500 dark:text-bolt-elements-textTertiary truncate">{email}</div>}
+                </div>
               </div>
+
+              <div className="px-3 py-2">
+                <div className="text-xs text-gray-500 dark:text-bolt-elements-textTertiary mb-1">Plano</div>
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs border border-black/10 dark:border-white/15 bg-black/5 dark:bg-white/5">
+                    {planLoading ? 'Carregando…' : planName || 'Free'}
+                  </span>
+                  <a href="#" className="text-xs text-bolt-elements-item-contentAccent hover:underline">Gerenciar plano</a>
+                  <a href="#" className="ml-auto text-xs text-bolt-elements-item-contentAccent hover:underline">Histórico de pagamentos</a>
+                </div>
+              </div>
+              <DropdownMenu.Separator className="h-px bg-bolt-elements-borderColor my-1" />
               <DropdownMenu.Item className="flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-bolt-elements-background-depth-3 cursor-pointer" onSelect={() => setIsSettingsOpen(true)}>
                 <span className="i-ph:gear-six text-base" />
-                <span>Configurações</span>
+                <span>Editar perfil e preferências</span>
               </DropdownMenu.Item>
               <DropdownMenu.Item className="flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-bolt-elements-background-depth-3 cursor-pointer" onSelect={() => signOut()}>
                 <span className="i-ph:sign-out text-base" />
@@ -106,16 +156,28 @@ function UserMenu() {
               </DropdownMenu.Item>
             </>
           ) : (
-            <DropdownMenu.Item className="flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-bolt-elements-background-depth-3 cursor-pointer" asChild>
-              <a href="#" onClick={() => (window.location.href = '/') }>
-                <span className="i-ph:sign-in text-base" />
-                <span>Login/Cadastro</span>
-              </a>
+            <DropdownMenu.Item
+              className="flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-bolt-elements-background-depth-3 cursor-pointer"
+              onSelect={(e) => {
+                e.preventDefault();
+                setIsOpen(false);
+                setIsAuthOpen(true);
+              }}
+            >
+              <span className="i-ph:sign-in text-base" />
+              <span>Login/Cadastro</span>
             </DropdownMenu.Item>
           )}
         </DropdownMenu.Content>
       </DropdownMenu.Root>
       <ControlPanel open={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+      <ClientOnly>
+        {() =>
+          isAuthOpen ? (
+            <AuthScreen mode="modal" onClose={() => setIsAuthOpen(false)} onAuthSuccess={() => setIsAuthOpen(false)} />
+          ) : null
+        }
+      </ClientOnly>
     </>
   );
 }
