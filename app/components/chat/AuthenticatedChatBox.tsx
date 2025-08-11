@@ -69,6 +69,16 @@ export function AuthenticatedChatBox({
     }
   }, [user, shouldSendAfterAuth, preservedPrompt, originalHandleSendMessage, onMessageSent]);
 
+  // Quando existir um prompt preservado mas não estamos no fluxo de autenticação,
+  // propagar o valor para o input controlado do Chat e limpar o estado local para permitir edição.
+  useEffect(() => {
+    if (preservedPrompt && !showAuthScreen && !shouldSendAfterAuth) {
+      const syntheticEvent = { target: { value: preservedPrompt } } as React.ChangeEvent<HTMLTextAreaElement>;
+      chatBoxProps.handleInputChange?.(syntheticEvent);
+      setPreservedPrompt('');
+    }
+  }, [preservedPrompt, showAuthScreen, shouldSendAfterAuth, chatBoxProps.handleInputChange]);
+
   // Handler personalizado que verifica autenticação
   const handleSendMessage = useCallback(
     (event: React.UIEvent, messageInput?: string) => {
@@ -156,7 +166,15 @@ export function AuthenticatedChatBox({
 
   return (
     <>
-      <ChatBox {...chatBoxProps} handleSendMessage={handleSendMessage} input={preservedPrompt || chatBoxProps.input} />
+      {/**
+       * Apenas sobrepõe o valor do input com o preservedPrompt enquanto a tela de autenticação
+       * estiver aberta. Fora desse contexto, usamos o input controlado normal (editável).
+       */}
+      <ChatBox
+        {...chatBoxProps}
+        handleSendMessage={handleSendMessage}
+        input={showAuthScreen ? preservedPrompt || chatBoxProps.input : chatBoxProps.input}
+      />
 
       {/* Tela de autenticação modal */}
       {showAuthScreen && (
