@@ -356,14 +356,33 @@ export const ChatImpl = memo(
         return;
       }
 
-      await Promise.all([
-        animate('#examples', { opacity: 0, display: 'none' }, { duration: 0.1 }),
-        animate('#intro', { opacity: 0, flex: 1 }, { duration: 0.2, ease: cubicEasingFn }),
-      ]);
+      try {
+        const animations: Promise<any>[] = [];
 
-      chatStore.setKey('started', true);
+        // Só anima se os elementos existirem para evitar erros do framer-motion
+        if (document.querySelector('#examples')) {
+          animations.push(
+            animate('#examples', { opacity: 0, display: 'none' }, { duration: 0.1 }),
+          );
+        }
 
-      setChatStarted(true);
+        if (document.querySelector('#intro')) {
+          animations.push(
+            animate('#intro', { opacity: 0, flex: 1 }, { duration: 0.2, ease: cubicEasingFn }),
+          );
+        }
+
+        if (animations.length) {
+          await Promise.all(animations);
+        }
+      } catch (error) {
+        // Não bloquear o fluxo em caso de erro de animação
+        console.warn('runAnimation skipped due to missing elements or animation error', error);
+      } finally {
+        // Garanta que o fluxo prossiga para abrir o Workbench
+        chatStore.setKey('started', true);
+        setChatStarted(true);
+      }
     };
 
     // Helper function to create message parts array from text and images
