@@ -77,24 +77,33 @@ export function SupabaseConnection() {
 
   return (
     <div className="relative">
-      <div className="flex border border-bolt-elements-borderColor rounded-md overflow-hidden mr-2 text-sm">
-        <Button
-          active
+      <div className="relative">
+        <button
           disabled={connecting}
           onClick={() => setIsDialogOpen(!isDialogOpen)}
-          className="hover:bg-bolt-elements-item-backgroundActive !text-white flex items-center gap-2"
+          className="justify-center whitespace-nowrap text-sm font-medium transition-colors duration-100 ease-in-out focus-visible:outline-none focus-visible:ring-gray-400 disabled:pointer-events-none disabled:opacity-50 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 px-3 py-2 flex h-8 max-w-48 items-center gap-1 rounded-full text-gray-600 dark:text-gray-400 focus-visible:ring-0 md:max-w-48"
+          type="button"
         >
-          <img
-            className="w-4 h-4"
-            height="20"
-            width="20"
-            crossOrigin="anonymous"
-            src="https://cdn.simpleicons.org/supabase"
-          />
-          {isConnected && supabaseConn.project && (
-            <span className="ml-1 text-xs max-w-[100px] truncate">{supabaseConn.project.name}</span>
-          )}
-        </Button>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 109 113" className="h-4 w-4 flex-shrink-0">
+            <path fill="url(#supabase_svg__a)" d="M63.708 110.284c-2.86 3.601-8.658 1.628-8.727-2.97l-1.007-67.251h45.22c8.19 0 12.758 9.46 7.665 15.874z"></path>
+            <path fill="url(#supabase_svg__b)" fillOpacity="0.2" d="M63.708 110.284c-2.86 3.601-8.658 1.628-8.727-2.97l-1.007-67.251h45.22c8.19 0 12.758 9.46 7.665 15.874z"></path>
+            <path fill="#3ECF8E" d="M45.317 2.071c2.86-3.601 8.657-1.628 8.726 2.97l.442 67.251H9.83c-8.19 0-12.759-9.46-7.665-15.875z"></path>
+            <defs>
+              <linearGradient id="supabase_svg__a" x1="53.974" x2="94.163" y1="54.974" y2="71.829" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#249361"></stop>
+                <stop offset="1" stopColor="#3ECF8E"></stop>
+              </linearGradient>
+              <linearGradient id="supabase_svg__b" x1="36.156" x2="54.484" y1="30.578" y2="65.081" gradientUnits="userSpaceOnUse">
+                <stop></stop>
+                <stop offset="1" stopOpacity="0"></stop>
+              </linearGradient>
+            </defs>
+          </svg>
+          <span className="hidden min-w-0 truncate text-sm font-medium md:block">Supabase</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 -960 960 960" className="shrink-0 h-3 w-3 rotate-90" fill="currentColor">
+            <path d="M530-481 353-658q-9-9-8.5-21t9.5-21 21.5-9 21.5 9l198 198q5 5 7 10t2 11-2 11-7 10L396-261q-9 9-21 8.5t-21-9.5-9-21.5 9-21.5z"></path>
+          </svg>
+        </button>
       </div>
 
       <DialogRoot open={isDialogOpen} onOpenChange={setIsDialogOpen}>

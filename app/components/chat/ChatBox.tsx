@@ -61,36 +61,7 @@ export interface ChatBoxProps {
 
 export const ChatBox: React.FC<ChatBoxProps> = (props) => {
   return (
-    <div
-      className={classNames(
-        'relative bg-bolt-elements-background-depth-2 backdrop-blur p-3 rounded-lg border border-bolt-elements-borderColor relative w-full max-w-[130%] mx-auto z-prompt',
-
-        /*
-         * {
-         *   'sticky bottom-2': chatStarted,
-         * },
-         */
-      )}
-    >
-      <svg className={classNames(styles.PromptEffectContainer)}>
-        <defs>
-          <linearGradient id="line-gradient" x1="0%" y1="0%" x2="100%" y2="0%" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#FF7C3F" stopOpacity="0.0"></stop>
-            <stop offset="10%" stopColor="#FF7C3F" stopOpacity="0.9"></stop>
-            <stop offset="50%" stopColor="#FF4C7D" stopOpacity="1"></stop>
-            <stop offset="90%" stopColor="#A24CFF" stopOpacity="0.9"></stop>
-            <stop offset="100%" stopColor="#A24CFF" stopOpacity="0.0"></stop>
-          </linearGradient>
-          <linearGradient id="shine-gradient">
-            <stop offset="0%" stopColor="white" stopOpacity="0%"></stop>
-            <stop offset="40%" stopColor="#ffffff" stopOpacity="80%"></stop>
-            <stop offset="50%" stopColor="#ffffff" stopOpacity="80%"></stop>
-            <stop offset="100%" stopColor="white" stopOpacity="0%"></stop>
-          </linearGradient>
-        </defs>
-        <rect className={classNames(styles.PromptEffectLine)} pathLength="100" strokeLinecap="round"></rect>
-        <rect className={classNames(styles.PromptShine)} x="48" y="24" width="70" height="1"></rect>
-      </svg>
+    <div className="relative w-full max-w-chat mx-auto z-prompt">
       {/* ModelSelector/APIKeyManager removidos: gerenciamento via AgentMenu + ModelSettingsMenu */}
       <FilePreview
         files={props.uploadedFiles}
@@ -126,174 +97,154 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
           </button>
         </div>
       )}
-      <div
-        className={classNames(
-          'relative shadow-xs border border-bolt-elements-borderColor backdrop-blur rounded-lg',
-          styles.ChatInputWrapper,
-        )}
-      >
-        <textarea
-          ref={props.textareaRef}
-          className={classNames(
-            'w-full pl-4 pt-4 pr-16 outline-none resize-none text-bolt-elements-textPrimary placeholder-bolt-elements-textTertiary bg-transparent text-sm',
-            'transition-all duration-200',
-            'hover:border-bolt-elements-focus',
-          )}
-          onDragEnter={(e) => {
-            e.preventDefault();
-            e.currentTarget.style.border = '2px solid #1488fc';
-          }}
-          onDragOver={(e) => {
-            e.preventDefault();
-            e.currentTarget.style.border = '2px solid #1488fc';
-          }}
-          onDragLeave={(e) => {
-            e.preventDefault();
-            e.currentTarget.style.border = '1px solid var(--bolt-elements-borderColor)';
-          }}
-          onDrop={(e) => {
-            e.preventDefault();
-            e.currentTarget.style.border = '1px solid var(--bolt-elements-borderColor)';
+      {/* Container principal seguindo estrutura do Lovable */}
+      <div className="w-full max-w-3xl">
+        <div className="relative w-full">
+          <div className="flex w-full flex-col items-center">
+            <div className="relative size-full">
+              <form className="group flex flex-col gap-2 p-3 w-full rounded-3xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-base shadow-xl transition-all duration-150 ease-in-out focus-within:border-gray-400 dark:focus-within:border-gray-500 hover:border-gray-400 dark:hover:border-gray-500">
 
-            const files = Array.from(e.dataTransfer.files);
-            files.forEach((file) => {
-              if (file.type.startsWith('image/')) {
-                const reader = new FileReader();
+                {/* Área do textarea */}
+                <div className="relative flex flex-1 items-center">
+                  <textarea
+                    ref={props.textareaRef}
+                    className="flex w-full rounded-md px-2 py-2 ring-offset-background placeholder:text-gray-500 dark:placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 resize-none text-[16px] leading-snug placeholder-shown:text-ellipsis placeholder-shown:whitespace-nowrap md:text-base max-h-[200px] bg-transparent focus:bg-transparent flex-1 text-gray-900 dark:text-gray-100"
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        if (event.shiftKey) {
+                          return;
+                        }
 
-                reader.onload = (e) => {
-                  const base64Image = e.target?.result as string;
-                  props.setUploadedFiles?.([...props.uploadedFiles, file]);
-                  props.setImageDataList?.([...props.imageDataList, base64Image]);
-                };
-                reader.readAsDataURL(file);
-              }
-            });
-          }}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              if (event.shiftKey) {
-                return;
-              }
+                        event.preventDefault();
 
-              event.preventDefault();
+                        if (props.isStreaming) {
+                          props.handleStop?.();
+                          return;
+                        }
 
-              if (props.isStreaming) {
-                props.handleStop?.();
-                return;
-              }
+                        if (event.nativeEvent.isComposing) {
+                          return;
+                        }
 
-              // ignore if using input method engine
-              if (event.nativeEvent.isComposing) {
-                return;
-              }
+                        props.handleSendMessage?.(event);
+                      }
+                    }}
+                    value={props.input}
+                    onChange={(event) => {
+                      props.handleInputChange?.(event);
+                    }}
+                    onPaste={props.handlePaste}
+                    style={{
+                      minHeight: '80px',
+                      height: '80px',
+                    }}
+                    placeholder="Peça a SuperApps para criar um projeto"
+                    maxLength={50000}
+                    translate="no"
+                  />
+                </div>
 
-              props.handleSendMessage?.(event);
-            }
-          }}
-          value={props.input}
-          onChange={(event) => {
-            props.handleInputChange?.(event);
-          }}
-          onPaste={props.handlePaste}
-          style={{
-            minHeight: props.TEXTAREA_MIN_HEIGHT,
-            maxHeight: props.TEXTAREA_MAX_HEIGHT,
-          }}
-          placeholder={props.chatMode === 'build' ? 'How can Bolt help you today?' : 'What would you like to discuss?'}
-          translate="no"
-        />
-        <ClientOnly>
-          {() => (
-            <SendButton
-              show={true}
-              isStreaming={props.isStreaming}
-              disabled={
-                !props.providerList ||
-                props.providerList.length === 0 ||
-                (!props.isStreaming && props.input.length === 0 && props.uploadedFiles.length === 0)
-              }
-              onClick={(event) => {
-                if (props.isStreaming) {
-                  props.handleStop?.();
-                  return;
-                }
+                {/* Container dos botões - seguindo exatamente a estrutura do Lovable */}
+                <div className="flex gap-1 flex-wrap items-center">
 
-                if (props.input.length > 0 || props.uploadedFiles.length > 0) {
-                  props.handleSendMessage?.(event);
-                }
-              }}
-            />
-          )}
-        </ClientOnly>
-        <div className="flex justify-between items-center text-sm p-4 pt-2">
-          <div className="flex gap-1 items-center">
-            {props.providerList?.length ? (
-              <AgentMenu
-                provider={props.provider as any}
-                providerList={(props.providerList as any[]) || []}
-                model={props.model as any}
-                modelList={(props.modelList as any[]) || []}
-                setProvider={props.setProvider as any}
-                setModel={props.setModel as any}
-                apiKeys={props.apiKeys}
-                onApiKeysChange={props.onApiKeysChange}
-                className={classNames(styles.ChatIconButton)}
-              />
-            ) : null}
-            <IconButton
-              title="Upload file"
-              className={classNames('transition-all', styles.ChatIconButton)}
-              onClick={() => props.handleFileUpload()}
-            >
-              <div className="i-ph:paperclip text-xl"></div>
-            </IconButton>
-            <ModelSettingsMenu
-              onTogglePanel={() => props.setIsModelSettingsCollapsed(!props.isModelSettingsCollapsed)}
-              canEnhance={props.input.length > 0 && !props.enhancingPrompt}
-              onEnhance={() => {
-                props.enhancePrompt?.();
-                toast.success('Prompt enhanced!');
-              }}
-              enhancingPrompt={props.enhancingPrompt}
-              designScheme={props.designScheme as any}
-              setDesignScheme={props.setDesignScheme as any}
-              className={classNames(styles.ChatIconButton)}
-            />
+                  {/* 1. Botão Microfone (no lugar do +) */}
+                  <button
+                    type="button"
+                    className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors duration-100 ease-in-out focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-400 disabled:pointer-events-none disabled:opacity-50 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 gap-1.5 h-8 w-8 rounded-full p-0 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+                    onClick={props.isListening ? props.stopListening : props.startListening}
+                    disabled={props.isStreaming}
+                    title="Reconhecimento de voz"
+                  >
+                    <div className={`i-ph:microphone text-base ${props.isListening ? 'text-red-500' : ''}`}></div>
+                  </button>
 
-            <SpeechRecognitionButton
-              isListening={props.isListening}
-              onStart={props.startListening}
-              onStop={props.stopListening}
-              disabled={props.isStreaming}
-            />
-            {props.chatStarted && (
-              <IconButton
-                title="Discuss"
-                className={classNames(
-                  'transition-all flex items-center gap-1 px-1.5',
-                  styles.ChatIconButton,
-                  props.chatMode === 'discuss'
-                    ? '!bg-bolt-elements-item-backgroundAccent !text-bolt-elements-item-contentAccent'
-                    : 'bg-bolt-elements-item-backgroundDefault text-bolt-elements-item-contentDefault',
-                )}
-                onClick={() => {
-                  props.setChatMode?.(props.chatMode === 'discuss' ? 'build' : 'discuss');
-                }}
-              >
-                <div className={`i-ph:chats text-xl`} />
-                {props.chatMode === 'discuss' ? <span>Discuss</span> : <span />}
-              </IconButton>
-            )}
-          </div>
-          {props.input.length > 3 ? (
-            <div className="text-xs text-bolt-elements-textTertiary">
-              Use <kbd className="kdb px-1.5 py-0.5 rounded bg-bolt-elements-background-depth-2">Shift</kbd> +{' '}
-              <kbd className="kdb px-1.5 py-0.5 rounded bg-bolt-elements-background-depth-2">Return</kbd> a new line
+                  {/* 2. Botão Anexar */}
+                  <button
+                    type="button"
+                    className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors duration-100 ease-in-out focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-400 disabled:pointer-events-none disabled:opacity-50 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 py-2 h-8 gap-1.5 rounded-full px-3 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+                    onClick={() => props.handleFileUpload()}
+                    title="Anexar arquivo"
+                  >
+                    <div className="i-ph:paperclip text-base"></div>
+                    <span className="hidden md:flex">Anexar</span>
+                  </button>
+
+                  {/* 3. Botão Configurações (no lugar de Público) */}
+                  <button
+                    type="button"
+                    className="whitespace-nowrap text-sm font-medium transition-colors duration-100 ease-in-out focus-visible:outline-none focus-visible:ring-gray-400 disabled:pointer-events-none disabled:opacity-50 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 px-3 py-2 flex h-8 items-center justify-center gap-1 rounded-full text-gray-600 dark:text-gray-400 focus-visible:ring-0"
+                    onClick={() => props.setIsModelSettingsCollapsed(!props.isModelSettingsCollapsed)}
+                    title="Configurações"
+                  >
+                    <div className="flex items-center gap-1 duration-200">
+                      <div className="i-ph:gear text-base"></div>
+                      <span className="hidden md:flex">Configurações</span>
+                    </div>
+                  </button>
+
+                  {/* 4. Botão Supabase */}
+                  <SupabaseConnection />
+
+                  {/* Lado direito - Provider IA e Enviar */}
+                  <div className="ml-auto flex items-center gap-1">
+                    <div className="relative flex items-center gap-1 md:gap-2">
+
+                      {/* 5. Provider IA (no lugar de GPT-5) */}
+                      {props.providerList?.length ? (
+                        <AgentMenu
+                          provider={props.provider as any}
+                          providerList={(props.providerList as any[]) || []}
+                          model={props.model as any}
+                          modelList={(props.modelList as any[]) || []}
+                          setProvider={props.setProvider as any}
+                          setModel={props.setModel as any}
+                          apiKeys={props.apiKeys}
+                          onApiKeysChange={props.onApiKeysChange}
+                          className="lovable-provider-button"
+                        />
+                      ) : null}
+
+                      {/* 6. Botão de Envio */}
+                      <button
+                        type="submit"
+                        className={classNames(
+                          "flex h-8 w-8 items-center justify-center rounded-full transition-opacity duration-150 ease-out disabled:cursor-not-allowed disabled:opacity-50",
+                          props.input.length > 0 || props.uploadedFiles.length > 0
+                            ? "bg-gray-900 dark:bg-gray-100"
+                            : "bg-gray-400 dark:bg-gray-600"
+                        )}
+                        disabled={
+                          !props.providerList ||
+                          props.providerList.length === 0 ||
+                          (!props.isStreaming && props.input.length === 0 && props.uploadedFiles.length === 0)
+                        }
+                        onClick={(event) => {
+                          event.preventDefault();
+                          if (props.isStreaming) {
+                            props.handleStop?.();
+                            return;
+                          }
+
+                          if (props.input.length > 0 || props.uploadedFiles.length > 0) {
+                            props.handleSendMessage?.(event);
+                          }
+                        }}
+                      >
+                        <div className="i-ph:arrow-up text-lg text-white dark:text-gray-900"></div>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </form>
             </div>
-          ) : null}
-          <SupabaseConnection />
-          <ExpoQrModal open={props.qrModalOpen} onClose={() => props.setQrModalOpen(false)} />
+            <div className="h-[40px]"></div>
+          </div>
         </div>
+      </div>
+
+      {/* Componentes ocultos para funcionalidades extras */}
+      <div className="hidden">
+        <ExpoQrModal open={props.qrModalOpen} onClose={() => props.setQrModalOpen(false)} />
       </div>
     </div>
   );
