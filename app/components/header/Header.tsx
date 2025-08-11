@@ -19,11 +19,11 @@ export function Header() {
         'border-b border-black/10 dark:border-black/40',
       )}
     >
-      <div className="flex items-center gap-3 z-logo text-bolt-elements-textPrimary">
+      <div className="flex items-center gap-2 md:gap-3 z-logo text-bolt-elements-textPrimary">
         <a href="/" className="text-2xl font-semibold text-accent flex items-center">
           {/* <span className="i-bolt:logo-text?mask w-[46px] inline-block" /> */}
-          <img src="/logo-light-styled.png" alt="logo" className="w-[90px] inline-block dark:hidden" />
-          <img src="/logo-dark-styled.png" alt="logo" className="w-[90px] inline-block hidden dark:block" />
+          <img src="/logo-light-styled.png" alt="logo" className="w-[74px] md:w-[90px] inline-block dark:hidden" />
+          <img src="/logo-dark-styled.png" alt="logo" className="w-[74px] md:w-[90px] inline-block hidden dark:block" />
         </a>
       </div>
       {/* Navegação central fixa conforme design */}
@@ -38,7 +38,7 @@ export function Header() {
           <ClientOnly>{() => <ChatDescription />}</ClientOnly>
         </span>
       )}
-      <div className="flex items-center gap-3 ml-auto">
+      <div className="flex items-center gap-2 md:gap-3 ml-auto">
         <ClientOnly>{() => <HeaderMenu />}</ClientOnly>
         <ClientOnly>{() => <HeaderRight />}</ClientOnly>
       </div>
@@ -107,15 +107,15 @@ function UserMenu() {
       <DropdownMenu.Root open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenu.Trigger asChild>
           <button
-            className="flex items-center gap-2 h-10 pl-2 pr-3 rounded-full text-white border border-white/10 hover:brightness-110"
+            className="flex items-center gap-2 h-9 md:h-10 px-1.5 md:pl-2 md:pr-3 rounded-full text-white border border-white/10 hover:brightness-110"
             style={{ backgroundImage: 'var(--bolt-elements-gradient-primary)', opacity: 1, transform: 'none' }}
           >
             {avatarUrl ? (
-              <img src={avatarUrl} alt={displayName || 'User'} className="h-7 w-7 rounded-full object-cover" />
+              <img src={avatarUrl} alt={displayName || 'User'} className="h-8 w-8 md:h-7 md:w-7 rounded-full object-cover" />
             ) : (
-              <span className="flex items-center justify-center h-7 w-7 rounded-full bg-white/20 font-bold">{initials}</span>
+              <span className="flex items-center justify-center h-8 w-8 md:h-7 md:w-7 rounded-full bg-white/20 font-bold">{initials}</span>
             )}
-            <span className="text-sm font-medium">{isAuthenticated ? displayName || email || 'Usuário' : 'Login/Cadastro'}</span>
+            <span className="hidden md:inline text-sm font-medium">{isAuthenticated ? displayName || email || 'Usuário' : 'Login/Cadastro'}</span>
           </button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Content className="min-w-[280px] rounded-lg p-2 bg-white text-gray-900 dark:bg-bolt-elements-background-depth-2 dark:text-bolt-elements-textPrimary border border-black/10 dark:border-bolt-elements-borderColor shadow-xl z-[99999]">
@@ -185,20 +185,20 @@ function ModernThemeSwitch() {
   return (
     <button
       onClick={() => toggleTheme()}
-      className="relative inline-flex h-8 w-16 items-center rounded-full bg-black/10 dark:bg-white/10 border border-black/15 dark:border-white/15 hover:brightness-110 transition-colors overflow-hidden"
+      className="relative inline-flex h-7 w-12 md:h-8 md:w-16 items-center rounded-full bg-black/10 dark:bg-white/10 border border-black/15 dark:border-white/15 hover:brightness-110 transition-colors overflow-hidden"
       aria-label="Alternar tema"
       type="button"
     >
       {/* logos dos modos */}
-      <span className="absolute left-2 flex items-center gap-1 text-xs text-gray-700 dark:hidden">
+      <span className="absolute left-1.5 md:left-2 flex items-center gap-1 text-[10px] md:text-xs text-gray-700 dark:hidden">
         <span className="i-ph:moon-stars-duotone" />
         <span>Dark</span>
       </span>
-      <span className="absolute right-2 hidden dark:flex items-center gap-1 text-xs text-yellow-300">
+      <span className="absolute right-1.5 md:right-2 hidden dark:flex items-center gap-1 text-[10px] md:text-xs text-yellow-300">
         <span className="i-ph:sun-dim-duotone" />
         <span>Light</span>
       </span>
-      <span className="pointer-events-none inline-block h-6 w-6 translate-x-1 rounded-full bg-white shadow-md transition-transform dark:translate-x-8" />
+      <span className="pointer-events-none inline-block h-5 w-5 md:h-6 md:w-6 translate-x-1 rounded-full bg-white shadow-md transition-transform dark:translate-x-7 md:dark:translate-x-8" />
     </button>
   );
 }
