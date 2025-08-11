@@ -61,7 +61,7 @@ export interface ChatBoxProps {
 
 export const ChatBox: React.FC<ChatBoxProps> = (props) => {
   return (
-    <div className="relative w-full max-w-chat mx-auto z-prompt">
+    <div className="relative w-full max-w-full mx-auto z-prompt">
       {/* ModelSelector/APIKeyManager removidos: gerenciamento via AgentMenu + ModelSettingsMenu */}
       <FilePreview
         files={props.uploadedFiles}
@@ -98,7 +98,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
         </div>
       )}
       {/* Container principal seguindo estrutura do Lovable */}
-      <div className="w-full max-w-3xl">
+      <div className="w-full">
         <div className="relative w-full">
           <div className="flex w-full flex-col items-center">
             <div className="relative size-full">
