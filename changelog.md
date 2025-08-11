@@ -1,3 +1,60 @@
+## Customizações da Plataforma (SuperApps)
+
+Data: 2025-08-11
+
+### Interface de Chat (ChatBox)
+- Atualização visual completa para design moderno/minimalista em `app/components/chat/ChatBox.tsx`.
+- Remoção de componentes antigos (`ModelSelector`, `APIKeyManager`) e inclusão de `AgentMenu` e `ModelSettingsMenu`.
+- Ajustes de gradientes, wrapper de input e reorganização da action bar; `SendButton` integrado sem regressões.
+- Scrollbar personalizada aplicada e refinada em `BaseChat.module.scss`.
+
+### Seletor de Provedor/Modelo (AgentMenu)
+- Reescrita com Radix UI nativo, correção de abertura/fechamento de dropdowns e z-index.
+- Navegação multi-nível baseada em estado (dentro de um único `DropdownMenu.Content`) para versões de modelos.
+- `onSelect` do provedor mantém o dropdown aberto (`preventDefault`) e imediatamente revela as versões.
+- Integração com a lista real de modelos do `LLMManager` por provedor; remoção de qualquer truncamento (exibe todos os modelos, sem “+29 modelos”).
+- Remoção de duplicidades de funções (`handleModelSelect`/`handleVersionSelect`).
+
+### Menu de Configurações de Modelo (ModelSettingsMenu)
+- Reescrita com Radix UI, seções organizadas (ferramentas, cores, etc.).
+- Correção de erro de sintaxe em arrow functions que bloqueava o build.
+
+### Autenticação e fluxo do prompt
+- Correção do `textarea` que ficava não editável após primeiro login em `AuthenticatedChatBox.tsx` (propagação correta de `preservedPrompt`).
+- Botão “Login/Cadastro” agora abre o modal `AuthScreen` diretamente a partir do menu do usuário (sem navegação extra).
+
+### Header (layout, navegação e responsividade)
+- Migração do menu lateral para header horizontal fixo em `app/components/header/Header.tsx`.
+- Navegação central (“Comunidade”, “Preços”, “Parceria”, “Aprender”) com estados de foco/hover.
+- Novo botão “Meus Projetos” via `HeaderMenu.client.tsx`; hover corrigido (contraste no modo claro).
+- Ajuste mobile: “Meus Projetos” vira “Projetos”; tamanho da logo proporcional ao restante.
+- Menu do usuário com gradiente (`--bolt-elements-gradient-primary`) e contraste corrigido para claro/escuro.
+- Aumento da altura do header via `app/styles/variables.scss` (`--header-height: 68px`).
+- Seletor de tema modernizado (`ModernThemeSwitch`):
+  - Tamanhos reduzidos em mobile.
+  - Remoção de textos “Dark/Light”; ícones (lua/sol) dentro do knob, sempre visíveis.
+
+### Perfil do Usuário (dados e edição)
+- Novo hook `useUserProfile` agregando dados do `profileStore` + Supabase Auth.
+- Novo hook `useHydrateProfile` para hidratar `profileStore` com `user_metadata` (nome/avatar) quando logado.
+- `ControlPanel` e `AvatarDropdown` passaram a renderizar dados reais do usuário (evitando “Guest User”).
+- `ProfileTab` passou a incluir “Alterar senha” (via `supabase.auth.updateUser({ password })`).
+
+### Plano do Usuário e Billing (menu do usuário)
+- Exibição do plano atual no dropdown do usuário (“Free”, “Pro”, “Empresas”), com leitura de `users.plan_id` no Supabase.
+- Ações rápidas: links “Gerenciar plano” e “Histórico de pagamentos”.
+
+### Outras correções e melhorias
+- Remoção de import duplicado de `ClientOnly` no header.
+- Build validado após cada conjunto de alterações.
+- Documentado formato `.env` para AWS Bedrock (`AWS_BEDROCK_CONFIG` com `region`, `accessKeyId`, `secretAccessKey`).
+
+### Próximos passos (planejados)
+- Página/rota real para “Histórico de pagamentos” e “Gerenciar plano”.
+- Menu hambúrguer (opcional) para navegar pelos links centrais no mobile.
+- Acessibilidade: estados de foco e navegação por teclado mais consistentes nos dropdowns.
+- Otimizações de bundle para reduzir o chunk do header (code-splitting quando oportuno).
+
 # 🚀 Release v1.0.0
 
 ## What's Changed 🌟
