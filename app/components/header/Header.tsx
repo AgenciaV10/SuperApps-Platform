@@ -58,8 +58,7 @@ function HeaderRight() {
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { ThemeSwitch } from '~/components/ui/ThemeSwitch';
 import { toggleTheme } from '~/lib/stores/theme';
-import { useStore as useNanoStore } from '@nanostores/react';
-import { profileStore as userProfileStore } from '~/lib/stores/profile';
+import { useUserProfile } from '~/lib/hooks/useUserProfile';
 import { useState } from 'react';
 import { ControlPanel } from '~/components/@settings/core/ControlPanel';
 
@@ -72,27 +71,48 @@ function ThemeToggler() {
 }
 
 function UserMenu() {
-  const profile = useNanoStore(userProfileStore);
+  const { isAuthenticated, loading, displayName, email, avatarUrl, initials, signOut } = useUserProfile();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const username = profile?.username || 'Usuário';
 
   return (
     <>
       <DropdownMenu.Root>
         <DropdownMenu.Trigger asChild>
-          <button className="flex items-center gap-2 h-10 pl-2 pr-3 rounded-full text-white border border-white/10 hover:brightness-110" style={{ backgroundImage: 'var(--bolt-elements-gradient-primary)', opacity: 1, transform: 'none' }}>
-            <span className="flex items-center justify-center h-7 w-7 rounded-full bg-white/20 font-bold">{username.charAt(0)}</span>
-            <span className="text-sm font-medium">{username}</span>
+          <button
+            className="flex items-center gap-2 h-10 pl-2 pr-3 rounded-full text-white border border-white/10 hover:brightness-110"
+            style={{ backgroundImage: 'var(--bolt-elements-gradient-primary)', opacity: 1, transform: 'none' }}
+          >
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={displayName || 'User'} className="h-7 w-7 rounded-full object-cover" />
+            ) : (
+              <span className="flex items-center justify-center h-7 w-7 rounded-full bg-white/20 font-bold">{initials}</span>
+            )}
+            <span className="text-sm font-medium">{isAuthenticated ? displayName || email || 'Usuário' : 'Login/Cadastro'}</span>
           </button>
         </DropdownMenu.Trigger>
-        <DropdownMenu.Content className="min-w-[240px] rounded-lg p-2 bg-white text-gray-900 dark:bg-bolt-elements-background-depth-2 dark:text-bolt-elements-textPrimary border border-black/10 dark:border-bolt-elements-borderColor shadow-xl z-[99999]">
-          <DropdownMenu.Item className="flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-bolt-elements-background-depth-3 cursor-pointer" onSelect={() => setIsSettingsOpen(true)}>
-            <span className="i-ph:gear-six text-base" />
-            <span>Configurações</span>
-          </DropdownMenu.Item>
-          <DropdownMenu.Item className="flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-bolt-elements-background-depth-3 cursor-pointer" asChild>
-            <a href="/">Sair</a>
-          </DropdownMenu.Item>
+        <DropdownMenu.Content className="min-w-[260px] rounded-lg p-2 bg-white text-gray-900 dark:bg-bolt-elements-background-depth-2 dark:text-bolt-elements-textPrimary border border-black/10 dark:border-bolt-elements-borderColor shadow-xl z-[99999]">
+          {isAuthenticated ? (
+            <>
+              <div className="px-3 py-2 text-xs text-gray-500 dark:text-bolt-elements-textTertiary">
+                {displayName || 'Usuário'}{email ? ` • ${email}` : ''}
+              </div>
+              <DropdownMenu.Item className="flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-bolt-elements-background-depth-3 cursor-pointer" onSelect={() => setIsSettingsOpen(true)}>
+                <span className="i-ph:gear-six text-base" />
+                <span>Configurações</span>
+              </DropdownMenu.Item>
+              <DropdownMenu.Item className="flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-bolt-elements-background-depth-3 cursor-pointer" onSelect={() => signOut()}>
+                <span className="i-ph:sign-out text-base" />
+                <span>Sair</span>
+              </DropdownMenu.Item>
+            </>
+          ) : (
+            <DropdownMenu.Item className="flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-bolt-elements-background-depth-3 cursor-pointer" asChild>
+              <a href="#" onClick={() => (window.location.href = '/') }>
+                <span className="i-ph:sign-in text-base" />
+                <span>Login/Cadastro</span>
+              </a>
+            </DropdownMenu.Item>
+          )}
         </DropdownMenu.Content>
       </DropdownMenu.Root>
       <ControlPanel open={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
