@@ -21,6 +21,7 @@ import { cubicEasingFn } from '~/utils/easings';
 import { renderLogger } from '~/utils/logger';
 import { EditorPanel } from './EditorPanel';
 import { Preview } from './Preview';
+import BuildWaitingScreen from './BuildWaitingScreen';
 import useViewport from '~/lib/hooks';
 import { PushToGitHubDialog } from '~/components/@settings/tabs/connections/components/PushToGitHubDialog';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
@@ -396,7 +397,7 @@ export const Workbench = memo(
                   />
                   <Slider selected={selectedView} options={sliderOptions} setSelected={setSelectedView} />
                   <div className="ml-auto" />
-                  {selectedView === 'code' && (
+                  {selectedView === 'code' && hasPreview && (
                     <div className="flex overflow-y-auto">
                       <PanelHeaderButton
                         className="mr-1 text-sm"
@@ -466,25 +467,56 @@ export const Workbench = memo(
                 </div>
                 <div className="relative flex-1 overflow-hidden">
                   <View initial={{ x: '0%' }} animate={{ x: selectedView === 'code' ? '0%' : '-100%' }}>
-                    <EditorPanel
-                      editorDocument={currentDocument}
-                      isStreaming={isStreaming}
-                      selectedFile={selectedFile}
-                      files={files}
-                      unsavedFiles={unsavedFiles}
-                      fileHistory={fileHistory}
-                      onFileSelect={onFileSelect}
-                      onEditorScroll={onEditorScroll}
-                      onEditorChange={onEditorChange}
-                      onFileSave={onFileSave}
-                      onFileReset={onFileReset}
-                    />
+                    {hasPreview ? (
+                      <EditorPanel
+                        editorDocument={currentDocument}
+                        isStreaming={isStreaming}
+                        selectedFile={selectedFile}
+                        files={files}
+                        unsavedFiles={unsavedFiles}
+                        fileHistory={fileHistory}
+                        onFileSelect={onFileSelect}
+                        onEditorScroll={onEditorScroll}
+                        onEditorChange={onEditorChange}
+                        onFileSave={onFileSave}
+                        onFileReset={onFileReset}
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex">
+                        {/* Terminal invisível para inicialização, mas sempre montado */}
+                        <div className="invisible absolute inset-0 pointer-events-none">
+                          <EditorPanel
+                            editorDocument={currentDocument}
+                            isStreaming={isStreaming}
+                            selectedFile={selectedFile}
+                            files={files}
+                            unsavedFiles={unsavedFiles}
+                            fileHistory={fileHistory}
+                            onFileSelect={onFileSelect}
+                            onEditorScroll={onEditorScroll}
+                            onEditorChange={onEditorChange}
+                            onFileSave={onFileSave}
+                            onFileReset={onFileReset}
+                          />
+                        </div>
+                        {/* Tela de espera visível */}
+                        <div className="absolute inset-0">
+                          <BuildWaitingScreen />
+                        </div>
+                      </div>
+                    )}
                   </View>
                   <View
                     initial={{ x: '100%' }}
                     animate={{ x: selectedView === 'diff' ? '0%' : selectedView === 'code' ? '100%' : '-100%' }}
                   >
-                    <DiffView fileHistory={fileHistory} setFileHistory={setFileHistory} />
+                    {hasPreview ? (
+                      <DiffView fileHistory={fileHistory} setFileHistory={setFileHistory} />
+                    ) : (
+                      <div className="absolute inset-0">
+                        <BuildWaitingScreen />
+                      </div>
+                    )}
                   </View>
                   <View initial={{ x: '100%' }} animate={{ x: selectedView === 'preview' ? '0%' : '100%' }}>
                     <Preview setSelectedElement={setSelectedElement} />

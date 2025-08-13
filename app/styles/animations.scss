@@ -12,6 +12,47 @@
   }
 }
 
+/* Build waiting screen animations */
+@keyframes scroll-vertical {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+.animate-scroll-vertical {
+  animation: scroll-vertical 40s linear infinite;
+}
+
+@keyframes gradient-scroll {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient-scroll {
+  background-size: 200% 200%;
+  animation: gradient-scroll 5s linear infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.animate-blink {
+  animation: blink 1s step-end infinite;
+}
+
 @keyframes fadeInRight {
   from {
     opacity: 0;

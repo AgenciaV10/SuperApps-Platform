@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ClientOnly } from 'remix-utils/client-only';
 import { classNames } from '~/utils/classNames';
 import FilePreview from './FilePreview';
@@ -60,6 +60,56 @@ export interface ChatBoxProps {
 }
 
 export const ChatBox: React.FC<ChatBoxProps> = (props) => {
+  // Placeholder com efeito de digitar/apagar (somente client)
+  const fullPlaceholderText = 'Digite Sua idéia e nos Criamos seu app em Minutos';
+  const [typedPlaceholder, setTypedPlaceholder] = useState<string>('');
+  const directionRef = useRef<'forward' | 'backward'>('forward');
+  const indexRef = useRef<number>(0);
+  const timerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const typeDelay = 55; // ms por caractere ao digitar
+    const eraseDelay = 35; // ms por caractere ao apagar
+    const holdEndDelay = 1400; // pausa quando chega ao fim
+    const holdStartDelay = 550; // pausa quando esvazia
+
+    const step = () => {
+      if (directionRef.current === 'forward') {
+        indexRef.current = Math.min(indexRef.current + 1, fullPlaceholderText.length);
+        setTypedPlaceholder(fullPlaceholderText.slice(0, indexRef.current));
+
+        if (indexRef.current >= fullPlaceholderText.length) {
+          directionRef.current = 'backward';
+          timerRef.current = window.setTimeout(step, holdEndDelay);
+
+          return;
+        }
+
+        timerRef.current = window.setTimeout(step, typeDelay);
+      } else {
+        indexRef.current = Math.max(indexRef.current - 1, 0);
+        setTypedPlaceholder(fullPlaceholderText.slice(0, indexRef.current));
+
+        if (indexRef.current <= 0) {
+          directionRef.current = 'forward';
+          timerRef.current = window.setTimeout(step, holdStartDelay);
+
+          return;
+        }
+
+        timerRef.current = window.setTimeout(step, eraseDelay);
+      }
+    };
+
+    timerRef.current = window.setTimeout(step, 350);
+
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div className="relative w-full max-w-full mx-auto z-prompt">
       {/* ModelSelector/APIKeyManager removidos: gerenciamento via AgentMenu + ModelSettingsMenu */}
@@ -138,7 +188,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                       minHeight: '80px',
                       height: '80px',
                     }}
-                    placeholder="Peça a SuperApps para criar um projeto"
+                    placeholder={props.input?.length ? '' : typedPlaceholder || 'Digite Sua idéia e nos Criamos seu app em Minutos'}
                     maxLength={50000}
                     translate="no"
                   />
