@@ -1,0 +1,5 @@
+{
+  "name": "App Build Progress",
+  "description": "A dynamic loading screen for a React application that shows a detailed, step-by-step build process with a progress bar and scrolling list of tasks.",
+  "requestFramePermissions": []
+}
