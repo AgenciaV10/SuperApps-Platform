@@ -367,23 +367,32 @@ export const Workbench = memo(
     return (
       chatStarted && (
         <motion.div
-          initial="closed"
-          animate={showWorkbench ? 'open' : 'closed'}
-          variants={workbenchVariants}
-          className="z-workbench"
+          initial={isSmallViewport ? "open" : "closed"}
+          animate={showWorkbench || isSmallViewport ? 'open' : 'closed'}
+          variants={isSmallViewport ? { open: { width: '100%' }, closed: { width: '100%' } } : workbenchVariants}
+          className={classNames('z-workbench', {
+            'flex-1 order-1': isSmallViewport && chatStarted, // Mobile: flex-1 para ocupar espaço restante, ordem 1 (primeiro)
+          })}
+          style={isSmallViewport && chatStarted ? { height: '70vh', flexShrink: 0 } : undefined}
         >
           <div
             className={classNames(
-              'fixed top-[calc(var(--header-height)+1.2rem)] bottom-6 w-[var(--workbench-inner-width)] z-0 transition-[left,width] duration-200 bolt-ease-cubic-bezier',
+              'z-0 transition-[left,width] duration-200 bolt-ease-cubic-bezier',
               {
-                'w-full': isSmallViewport,
+                // Mobile: classes específicas
+                'w-full h-full relative': isSmallViewport && chatStarted,
+                // Desktop: classes originais
+                'w-[var(--workbench-inner-width)] fixed top-[calc(var(--header-height)+1.2rem)] bottom-6': !isSmallViewport,
                 'left-0': showWorkbench && isSmallViewport,
-                'left-[var(--workbench-left)]': showWorkbench,
-                'left-[100%]': !showWorkbench,
+                'left-[var(--workbench-left)]': showWorkbench && !isSmallViewport,
+                'left-[100%]': !showWorkbench && !isSmallViewport,
               },
             )}
           >
-            <div className="absolute inset-0 px-2 lg:px-4">
+            <div className={classNames({
+              'absolute inset-0 px-2 lg:px-4': !isSmallViewport || !chatStarted,
+              'relative h-full px-2': isSmallViewport && chatStarted, // Mobile: altura relativa
+            })}>
               <div className="h-full flex flex-col bg-bolt-elements-background-depth-2 border border-bolt-elements-borderColor shadow-sm rounded-lg overflow-hidden">
                 <div className="flex items-center px-3 py-2 border-b border-bolt-elements-borderColor gap-1.5">
                   <button

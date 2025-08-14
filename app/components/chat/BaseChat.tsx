@@ -30,6 +30,7 @@ import { AuthenticatedChatBox } from './AuthenticatedChatBox';
 import type { DesignScheme } from '~/types/design-scheme';
 import type { ElementInfo } from '~/components/workbench/Inspector';
 import LlmErrorAlert from './LLMApiAlert';
+import useViewport from '~/lib/hooks/useViewport';
 
 const TEXTAREA_MIN_HEIGHT = 76;
 
@@ -130,6 +131,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     },
     ref,
   ) => {
+    const isSmallViewport = useViewport(1024);
     const TEXTAREA_MAX_HEIGHT = chatStarted ? 400 : 200;
     const [apiKeys, setApiKeys] = useState<Record<string, string>>(getApiKeysFromCookies());
     const [modelList, setModelList] = useState<ModelInfo[]>([]);
@@ -342,8 +344,35 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
         className={classNames(styles.BaseChat, 'relative flex h-full w-full overflow-hidden')}
         data-chat-visible={showChat}
       >
-        <div className="flex flex-col lg:flex-row overflow-y-auto w-full h-full">
-          <div className={classNames(styles.Chat, 'flex flex-col flex-grow lg:min-w-[var(--chat-min-width)] h-full')}>
+        <div className={classNames(
+          'w-full h-full',
+          {
+            // Desktop: layout horizontal sem mudanças
+            'flex flex-row overflow-y-auto': !chatStarted || !isSmallViewport,
+            // Mobile com chat iniciado: layout vertical sem scroll, altura fixa
+            'flex flex-col overflow-hidden': chatStarted && isSmallViewport,
+          }
+        )}>
+          {/* Mobile: Workbench primeiro, Desktop: Chat primeiro */}
+          {chatStarted && isSmallViewport && (
+            <ClientOnly>
+              {() => (
+                <Workbench
+                  chatStarted={chatStarted}
+                  isStreaming={isStreaming}
+                  setSelectedElement={setSelectedElement}
+                />
+              )}
+            </ClientOnly>
+          )}
+          <div className={classNames(styles.Chat, {
+            // Desktop: comportamento original
+            'flex flex-col flex-grow lg:min-w-[var(--chat-min-width)] h-full': !chatStarted || !isSmallViewport,
+            // Mobile durante construção: altura fixa para chat (30% da tela), ordem alterada
+            'flex flex-col flex-shrink-0 order-2': chatStarted && isSmallViewport,
+          })}
+            style={chatStarted && isSmallViewport ? { height: '30vh' } : undefined}
+          >
             {!chatStarted && (
               <div id="intro" className="mt-[16vh] max-w-2xl mx-auto text-center px-4 lg:px-0">
                 <h1 className="text-3xl lg:text-6xl font-bold text-bolt-elements-textPrimary mb-4 animate-fade-in">
@@ -355,18 +384,28 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
               </div>
             )}
             <StickToBottom
-              className={classNames('pt-6 px-2 sm:px-6 relative', {
-                'h-full flex flex-col modern-scrollbar': chatStarted,
+              className={classNames('relative', {
+                // Desktop tela inicial: sem h-full para permitir centralização
+                'pt-6 px-2 sm:px-6 flex flex-col modern-scrollbar': !chatStarted && !isSmallViewport,
+                // Desktop durante construção: com h-full normal
+                'pt-6 px-2 sm:px-6 h-full flex flex-col modern-scrollbar': chatStarted && !isSmallViewport,
+                // Mobile: padding menor
+                'pt-2 px-2 h-full flex flex-col': chatStarted && isSmallViewport,
+                // Mobile tela inicial: comportamento especial se necessário
+                'pt-6 px-2 sm:px-6 flex flex-col': !chatStarted && isSmallViewport,
               })}
               resize="smooth"
               initial="smooth"
             >
-              <StickToBottom.Content className="flex flex-col gap-4 relative ">
+              <StickToBottom.Content className="flex flex-col gap-4 relative flex-1 min-h-0">
                 <ClientOnly>
                   {() => {
                     return chatStarted ? (
                       <Messages
-                        className="flex flex-col w-full flex-1 max-w-chat pb-4 mx-auto z-1"
+                        className={classNames('flex flex-col w-full max-w-chat mx-auto z-1', {
+                          'flex-1 pb-4': !chatStarted || !isSmallViewport,
+                          'pb-1 overflow-y-auto': chatStarted && isSmallViewport, // Mobile: scroll apenas nas mensagens
+                        })}
                         messages={messages}
                         isStreaming={isStreaming}
                         append={append}
@@ -381,12 +420,20 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                 </ClientOnly>
                 <ScrollToBottom />
               </StickToBottom.Content>
+              {/* Chat input section - sempre visível */}
               <div
                 className={classNames(
-                  'my-auto flex flex-col gap-2 w-full mx-auto z-prompt mb-6',
+                  'flex flex-col gap-2 w-full mx-auto z-prompt flex-shrink-0',
                   {
-                    'max-w-chat sticky bottom-2': chatStarted,
-                    'max-w-[calc(var(--chat-max-width)*1.3)]': !chatStarted,
+                    // Tela inicial: centralizado verticalmente em desktop
+                    'my-auto mb-6 max-w-[calc(var(--chat-max-width)*1.3)]': !chatStarted && !isSmallViewport,
+                    // Tela inicial mobile: mantém o posicionamento mobile
+                    'mb-6 max-w-[calc(var(--chat-max-width)*1.3)]': !chatStarted && isSmallViewport,
+                    // Desktop durante construção
+                    'mb-6 max-w-chat sticky bottom-2': chatStarted && !showChat && !isSmallViewport, // Desktop quando chat colapsado
+                    'mb-2 lg:mb-6 max-w-chat': chatStarted && showChat && !isSmallViewport, // Desktop normal
+                    // Mobile durante construção: margem mínima
+                    'mb-1 max-w-chat': chatStarted && isSmallViewport,
                   },
                 )}
               >
@@ -471,11 +518,18 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
             </StickToBottom>
               {/* Bloco de importação/clone removido conforme solicitado */}
           </div>
-          <ClientOnly>
-            {() => (
-              <Workbench chatStarted={chatStarted} isStreaming={isStreaming} setSelectedElement={setSelectedElement} />
-            )}
-          </ClientOnly>
+          {/* Desktop: Workbench após o chat */}
+          {(!isSmallViewport || !chatStarted) && (
+            <ClientOnly>
+              {() => (
+                <Workbench
+                  chatStarted={chatStarted}
+                  isStreaming={isStreaming}
+                  setSelectedElement={setSelectedElement}
+                />
+              )}
+            </ClientOnly>
+          )}
         </div>
       </div>
     );
