@@ -68,6 +68,17 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
   const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
+    // Só executa a animação na tela inicial (quando chatStarted é false)
+    if (props.chatStarted) {
+      // Na tela de edição, define o placeholder estático e limpa qualquer timer
+      setTypedPlaceholder('');
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+      return;
+    }
+
     const typeDelay = 55; // ms por caractere ao digitar
     const eraseDelay = 35; // ms por caractere ao apagar
     const holdEndDelay = 1400; // pausa quando chega ao fim
@@ -108,7 +119,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
         clearTimeout(timerRef.current);
       }
     };
-  }, []);
+  }, [props.chatStarted]); // Adiciona chatStarted como dependência
 
   return (
     <div className="relative w-full max-w-full mx-auto z-prompt">
@@ -188,7 +199,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                       minHeight: '80px',
                       height: '80px',
                     }}
-                    placeholder={props.input?.length ? '' : typedPlaceholder || 'Digite Sua idéia e nos Criamos seu app em Minutos'}
+                    placeholder={props.input?.length ? '' : props.chatStarted ? 'Digite sua mensagem...' : (typedPlaceholder || 'Digite Sua idéia e nos Criamos seu app em Minutos')}
                     maxLength={50000}
                     translate="no"
                   />
@@ -211,25 +222,21 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                   {/* 2. Botão Anexar */}
                   <button
                     type="button"
-                    className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors duration-100 ease-in-out focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-400 disabled:pointer-events-none disabled:opacity-50 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 py-2 h-8 gap-1.5 rounded-full px-3 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+                    className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors duration-100 ease-in-out focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-400 disabled:pointer-events-none disabled:opacity-50 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 py-2 h-8 w-8 rounded-full text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
                     onClick={() => props.handleFileUpload()}
                     title="Anexar arquivo"
                   >
                     <div className="i-ph:paperclip text-base"></div>
-                    <span className="hidden md:flex">Anexar</span>
                   </button>
 
                   {/* 3. Botão Configurações (no lugar de Público) */}
                   <button
                     type="button"
-                    className="whitespace-nowrap text-sm font-medium transition-colors duration-100 ease-in-out focus-visible:outline-none focus-visible:ring-gray-400 disabled:pointer-events-none disabled:opacity-50 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 px-3 py-2 flex h-8 items-center justify-center gap-1 rounded-full text-gray-600 dark:text-gray-400 focus-visible:ring-0"
+                    className="whitespace-nowrap text-sm font-medium transition-colors duration-100 ease-in-out focus-visible:outline-none focus-visible:ring-gray-400 disabled:pointer-events-none disabled:opacity-50 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 py-2 flex h-8 w-8 items-center justify-center rounded-full text-gray-600 dark:text-gray-400 focus-visible:ring-0"
                     onClick={() => props.setIsModelSettingsCollapsed(!props.isModelSettingsCollapsed)}
                     title="Configurações"
                   >
-                    <div className="flex items-center gap-1 duration-200">
-                      <div className="i-ph:gear text-base"></div>
-                      <span className="hidden md:flex">Configurações</span>
-                    </div>
+                    <div className="i-ph:gear text-base"></div>
                   </button>
 
                   {/* 4. Botão Supabase */}

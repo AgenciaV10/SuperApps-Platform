@@ -182,15 +182,19 @@ export default function BuildWaitingScreen() {
 	}, []);
 
 	return (
-		<main className="min-h-full h-full w-full bg-gray-950 text-gray-100 flex flex-col items-center justify-between p-6 sm:p-8 lg:p-12 font-sans">
-			<div className="w-full flex flex-col items-center gap-8 pt-10 sm:pt-16">
-				<div className="flex flex-col items-center gap-3">
-					<p className="text-lg md:text-xl lg:text-2xl text-white/70 font-medium">Construindo com</p>
-					<img src="/logo-dark-styled.png" alt="Logo Super Apps" className="h-8 md:h-10 lg:h-12" />
+		<main className="min-h-full h-full w-full bg-gray-950 text-gray-100 flex flex-col items-center justify-between font-sans
+			p-3 sm:p-6 lg:p-12">
+			<div className="w-full flex flex-col items-center gap-4 sm:gap-8 pt-4 sm:pt-10 lg:pt-16">
+				<div className="flex flex-col items-center gap-2 sm:gap-3">
+					<p className="text-sm sm:text-lg lg:text-xl xl:text-2xl text-white/70 font-medium">Construindo com</p>
+					<img src="/logo-dark-styled.png" alt="Logo Super Apps" className="h-6 sm:h-8 lg:h-10 xl:h-12" />
 				</div>
 				<LoadingPreview progress={progress} appName={appName} />
 			</div>
-			<div className="h-16 md:h-20 flex items-center justify-center text-center text-lg md:text-xl lg:text-2xl pb-4 bg-gradient-to-r from-[#FF7C3F] via-[#FF4C7D] to-[#A24CFF] bg-clip-text text-transparent animate-gradient-scroll hover:brightness-110 font-medium">
+			<div className="h-12 sm:h-16 lg:h-20 flex items-center justify-center text-center
+				text-sm sm:text-lg lg:text-xl xl:text-2xl pb-2 sm:pb-4
+				bg-gradient-to-r from-[#FF7C3F] via-[#FF4C7D] to-[#A24CFF] bg-clip-text text-transparent
+				animate-gradient-scroll hover:brightness-110 font-medium">
 				<p>
 					Próximo passo: "{typedText}
 					<span className="animate-blink relative -left-1">|</span>"
