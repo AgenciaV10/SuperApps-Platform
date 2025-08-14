@@ -19,35 +19,35 @@ import type { IconType } from 'react-icons';
 type ProviderName =
   | 'AmazonBedrock'
   | 'Anthropic'
-  | 'Cohere'
+  // | 'Cohere'
   | 'Deepseek'
   | 'Google'
-  | 'Groq'
-  | 'HuggingFace'
-  | 'Hyperbolic'
-  | 'Mistral'
+  // | 'Groq'
+  // | 'HuggingFace'
+  // | 'Hyperbolic'
+  // | 'Mistral'
   | 'OpenAI'
   | 'OpenRouter'
-  | 'Perplexity'
-  | 'Together'
-  | 'XAI';
+  // | 'Perplexity'
+  // | 'Together'
+  // | 'XAI';
 
 // Update the PROVIDER_ICONS type to use the ProviderName type
 const PROVIDER_ICONS: Record<ProviderName, IconType> = {
   AmazonBedrock: SiAmazon,
   Anthropic: FaBrain,
-  Cohere: BiChip,
+  // Cohere: BiChip,
   Deepseek: BiCodeBlock,
   Google: SiGoogle,
-  Groq: BsCloud,
-  HuggingFace: SiHuggingface,
-  Hyperbolic: TbCloudComputing,
-  Mistral: TbBrain,
+  // Groq: BsCloud,
+  // HuggingFace: SiHuggingface,
+  // Hyperbolic: TbCloudComputing,
+  // Mistral: TbBrain,
   OpenAI: SiOpenai,
   OpenRouter: FaCloud,
-  Perplexity: SiPerplexity,
-  Together: BsCloud,
-  XAI: BsRobot,
+  // Perplexity: SiPerplexity,
+  // Together: BsCloud,
+  // XAI: BsRobot,
 };
 
 // Update PROVIDER_DESCRIPTIONS to use the same type
