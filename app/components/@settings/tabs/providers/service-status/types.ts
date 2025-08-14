@@ -2,17 +2,17 @@ import type { IconType } from 'react-icons';
 
 export type ProviderName =
   | 'AmazonBedrock'
-  | 'Cohere'
+  // | 'Cohere'
   | 'Deepseek'
   | 'Google'
-  | 'Groq'
-  | 'HuggingFace'
-  | 'Hyperbolic'
-  | 'Mistral'
+  // | 'Groq'
+  // | 'HuggingFace'
+  // | 'Hyperbolic'
+  // | 'Mistral'
   | 'OpenRouter'
-  | 'Perplexity'
-  | 'Together'
-  | 'XAI';
+  // | 'Perplexity'
+  // | 'Together'
+  // | 'XAI';
 
 export type ServiceStatus = {
   provider: ProviderName;
