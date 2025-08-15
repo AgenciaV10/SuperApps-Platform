@@ -43,7 +43,7 @@ export class AmazonBedrockStatusChecker extends BaseProviderChecker {
       // If status page check fails, fallback to endpoint check
       if (!statusPageResponse.ok) {
         const endpointStatus = await this.checkEndpoint('https://health.aws.amazon.com/health/status');
-        const apiEndpoint = 'https://bedrock.us-east-1.amazonaws.com/models';
+        const apiEndpoint = 'https://bedrock.us-east-2.amazonaws.com/models';
         const apiStatus = await this.checkEndpoint(apiEndpoint);
 
         return {
@@ -63,7 +63,7 @@ export class AmazonBedrockStatusChecker extends BaseProviderChecker {
 
       // Fallback to basic endpoint check
       const endpointStatus = await this.checkEndpoint('https://health.aws.amazon.com/health/status');
-      const apiEndpoint = 'https://bedrock.us-east-1.amazonaws.com/models';
+      const apiEndpoint = 'https://bedrock.us-east-2.amazonaws.com/models';
       const apiStatus = await this.checkEndpoint(apiEndpoint);
 
       return {

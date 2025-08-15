@@ -62,6 +62,7 @@ export default defineConfig((config) => {
       // TOGETHER_API_BASE_URL,
       'SUPABASE_URL',
       'SUPABASE_ANON_KEY',
+      'AWS_BEDROCK_CONFIG',
     ],
     css: {
       preprocessorOptions: {

@@ -132,11 +132,11 @@ const PROVIDER_STATUS_URLS: Record<ProviderName, ProviderConfig> = {
   // },
   AmazonBedrock: {
     statusUrl: 'https://health.aws.amazon.com/health/status',
-    apiUrl: 'https://bedrock.us-east-1.amazonaws.com/models',
+    apiUrl: 'https://bedrock.us-east-2.amazonaws.com/models',
     headers: {
       Authorization: 'Bearer $AWS_BEDROCK_CONFIG',
     },
-    testModel: 'anthropic.claude-3-sonnet-20240229-v1:0',
+    testModel: 'us.anthropic.claude-3-5-sonnet-20240620-v1:0',
   },
   // Groq: {
   //   statusUrl: 'https://groqstatus.com/',

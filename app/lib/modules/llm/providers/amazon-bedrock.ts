@@ -4,6 +4,34 @@ import type { LanguageModelV1 } from 'ai';
 import type { IProviderSetting } from '~/types/model';
 import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock';
 
+// Import the Env type from worker configuration
+interface Env {
+  AWS_BEDROCK_CONFIG: string;
+  [key: string]: any;
+}
+
+// Configuração específica de tokens para cada modelo Bedrock
+const BEDROCK_MODEL_CONFIGS = {
+  'us.anthropic.claude-3-5-sonnet-20240620-v1:0': {
+    maxTokens: 8000
+  },
+  'anthropic.claude-3-haiku-20240307-v1:0': {
+    maxTokens: 4096
+  },
+  'anthropic.claude-3-sonnet-20240229-v1:0': {
+    maxTokens: 4096
+  },
+  'amazon.nova-pro-v1:0': {
+    maxTokens: 5000
+  },
+  'amazon.nova-lite-v1:0': {
+    maxTokens: 5000
+  },
+  'mistral.mistral-large-2402-v1:0': {
+    maxTokens: 8000
+  }
+};
+
 interface AWSBedRockConfig {
   region: string;
   accessKeyId: string;
@@ -21,16 +49,10 @@ export default class AmazonBedrockProvider extends BaseProvider {
 
   staticModels: ModelInfo[] = [
     {
-      name: 'anthropic.claude-3-5-sonnet-20241022-v2:0',
-      label: 'Claude 3.5 Sonnet v2 (Bedrock)',
+      name: 'us.anthropic.claude-3-5-sonnet-20240620-v1:0',
+      label: 'Claude 3.5 Sonnet (Bedrock - Inference Profile)',
       provider: 'AmazonBedrock',
-      maxTokenAllowed: 200000,
-    },
-    {
-      name: 'anthropic.claude-3-5-sonnet-20240620-v1:0',
-      label: 'Claude 3.5 Sonnet (Bedrock)',
-      provider: 'AmazonBedrock',
-      maxTokenAllowed: 4096,
+      maxTokenAllowed: 8000,
     },
     {
       name: 'anthropic.claude-3-sonnet-20240229-v1:0',
@@ -48,19 +70,19 @@ export default class AmazonBedrockProvider extends BaseProvider {
       name: 'amazon.nova-pro-v1:0',
       label: 'Amazon Nova Pro (Bedrock)',
       provider: 'AmazonBedrock',
-      maxTokenAllowed: 5120,
+      maxTokenAllowed: 5000,
     },
     {
       name: 'amazon.nova-lite-v1:0',
       label: 'Amazon Nova Lite (Bedrock)',
       provider: 'AmazonBedrock',
-      maxTokenAllowed: 5120,
+      maxTokenAllowed: 5000,
     },
     {
       name: 'mistral.mistral-large-2402-v1:0',
       label: 'Mistral Large 24.02 (Bedrock)',
       provider: 'AmazonBedrock',
-      maxTokenAllowed: 8192,
+      maxTokenAllowed: 8000,
     },
   ];
 
@@ -93,7 +115,7 @@ export default class AmazonBedrockProvider extends BaseProvider {
 
   getModelInstance(options: {
     model: string;
-    serverEnv: any;
+    serverEnv: Env;
     apiKeys?: Record<string, string>;
     providerSettings?: Record<string, IProviderSetting>;
   }): LanguageModelV1 {
@@ -112,8 +134,17 @@ export default class AmazonBedrockProvider extends BaseProvider {
     }
 
     const config = this._parseAndValidateConfig(apiKey);
-    const bedrock = createAmazonBedrock(config);
 
-    return bedrock(model);
+    // Create the bedrock instance with basic configuration
+    const bedrockClient = createAmazonBedrock({
+      region: config.region,
+      accessKeyId: config.accessKeyId,
+      secretAccessKey: config.secretAccessKey,
+      sessionToken: config.sessionToken,
+    });
+
+    // Return the model instance directly from the client
+    // This follows the same pattern as other providers like OpenAI
+    return bedrockClient(model);
   }
 }
