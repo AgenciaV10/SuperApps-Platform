@@ -357,7 +357,7 @@ export const Workbench = memo(
 
     const handleSelectFile = useCallback((filePath: string) => {
       workbenchStore.setSelectedFile(filePath);
-      workbenchStore.currentView.set('code');
+      workbenchStore.currentView.set('diff');
     }, []);
 
     return (
