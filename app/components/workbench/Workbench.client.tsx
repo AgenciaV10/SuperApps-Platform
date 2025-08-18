@@ -46,10 +46,6 @@ const sliderOptions: SliderOptions<WorkbenchViewType> = {
     value: 'code',
     text: 'Code',
   },
-  middle: {
-    value: 'diff',
-    text: 'Diff',
-  },
   right: {
     value: 'preview',
     text: 'Preview',
@@ -361,7 +357,7 @@ export const Workbench = memo(
 
     const handleSelectFile = useCallback((filePath: string) => {
       workbenchStore.setSelectedFile(filePath);
-      workbenchStore.currentView.set('diff');
+      workbenchStore.currentView.set('code');
     }, []);
 
     return (
@@ -465,14 +461,6 @@ export const Workbench = memo(
                   {selectedView === 'diff' && (
                     <FileModifiedDropdown fileHistory={fileHistory} onSelectFile={handleSelectFile} />
                   )}
-                  <IconButton
-                    icon="i-ph:x-circle"
-                    className="-mr-1"
-                    size="xl"
-                    onClick={() => {
-                      workbenchStore.showWorkbench.set(false);
-                    }}
-                  />
                 </div>
                 <div className="relative flex-1 overflow-hidden">
                   <View initial={{ x: '0%' }} animate={{ x: selectedView === 'code' ? '0%' : '-100%' }}>

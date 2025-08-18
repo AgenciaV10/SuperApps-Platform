@@ -430,8 +430,8 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                     // Tela inicial mobile: mantém o posicionamento mobile
                     'mb-6 max-w-[calc(var(--chat-max-width)*1.3)]': !chatStarted && isSmallViewport,
                     // Desktop durante construção
-                    'mb-6 max-w-chat sticky bottom-2': chatStarted && !showChat && !isSmallViewport, // Desktop quando chat colapsado
-                    'mb-2 lg:mb-6 max-w-chat': chatStarted && showChat && !isSmallViewport, // Desktop normal
+                    'mb-6 max-w-chat sticky bottom-6': chatStarted && !showChat && !isSmallViewport, // Desktop quando chat colapsado
+                    'mb-2 lg:mb-6 max-w-chat sticky bottom-6': chatStarted && showChat && !isSmallViewport, // Desktop normal
                     // Mobile durante construção: margem mínima
                     'mb-1 max-w-chat': chatStarted && isSmallViewport,
                   },

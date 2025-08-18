@@ -294,7 +294,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                 </div>
               </form>
             </div>
-            <div className="h-[40px]"></div>
+            <div className="h-0"></div>
           </div>
         </div>
       </div>
