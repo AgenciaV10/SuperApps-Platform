@@ -12,10 +12,10 @@ export default function ChatAlert({ alert, clearAlert, postMessage }: Props) {
   const { description, content, source } = alert;
 
   const isPreview = source === 'preview';
-  const title = isPreview ? 'Preview Error' : 'Terminal Error';
+  const title = isPreview ? 'Erro no Preview' : 'Erro no Terminal';
   const message = isPreview
-    ? 'We encountered an error while running the preview. Would you like Bolt to analyze and help resolve this issue?'
-    : 'We encountered an error while running terminal commands. Would you like Bolt to analyze and help resolve this issue?';
+    ? 'Encontramos um erro ao executar o preview. Gostaria que o Super Apps analise e ajude a resolver este problema?'
+    : 'Encontramos um erro ao executar comandos do terminal. Gostaria que o Super Apps analise e ajude a resolver este problema?';
 
   return (
     <AnimatePresence>
@@ -24,8 +24,9 @@ export default function ChatAlert({ alert, clearAlert, postMessage }: Props) {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.3 }}
-        className={`rounded-lg border border-bolt-elements-borderColor bg-bolt-elements-background-depth-2 p-4 mb-2`}
+        className={`rounded-xl border-2 border-transparent bg-gradient-to-r from-[#FF7C3F] via-[#FF4C7D] to-[#A24CFF] p-0.5 mb-2`}
       >
+        <div className="bg-bolt-elements-background-depth-2 rounded-xl p-4">
         <div className="flex items-start">
           {/* Icon */}
           <motion.div
@@ -75,32 +76,33 @@ export default function ChatAlert({ alert, clearAlert, postMessage }: Props) {
                     )
                   }
                   className={classNames(
-                    `px-2 py-1.5 rounded-md text-sm font-medium`,
-                    'bg-bolt-elements-button-primary-background',
-                    'hover:bg-bolt-elements-button-primary-backgroundHover',
-                    'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bolt-elements-button-danger-background',
-                    'text-bolt-elements-button-primary-text',
-                    'flex items-center gap-1.5',
+                    `px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200`,
+                    'bg-gradient-to-r from-[#FF7C3F] via-[#FF4C7D] to-[#A24CFF]',
+                    'hover:brightness-110 hover:shadow-lg',
+                    'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#A24CFF]',
+                    'text-white',
+                    'flex items-center gap-2 shadow-md',
                   )}
                 >
                   <div className="i-ph:chat-circle-duotone"></div>
-                  Ask Bolt
+                  Analisar com Super Apps
                 </button>
                 <button
                   onClick={clearAlert}
                   className={classNames(
-                    `px-2 py-1.5 rounded-md text-sm font-medium`,
-                    'bg-bolt-elements-button-secondary-background',
-                    'hover:bg-bolt-elements-button-secondary-backgroundHover',
+                    `px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200`,
+                    'bg-bolt-elements-button-secondary-background border border-bolt-elements-borderColor',
+                    'hover:bg-bolt-elements-button-secondary-backgroundHover hover:shadow-md',
                     'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bolt-elements-button-secondary-background',
                     'text-bolt-elements-button-secondary-text',
                   )}
                 >
-                  Dismiss
+                  Dispensar
                 </button>
               </div>
             </motion.div>
           </div>
+        </div>
         </div>
       </motion.div>
     </AnimatePresence>
