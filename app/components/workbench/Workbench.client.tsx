@@ -302,10 +302,10 @@ export const Workbench = memo(
     };
 
     useEffect(() => {
-      if (hasPreview) {
+      if (hasPreview && selectedView === 'code') {
         setSelectedView('preview');
       }
-    }, [hasPreview]);
+    }, [hasPreview, selectedView]);
 
     useEffect(() => {
       workbenchStore.setDocuments(files);
@@ -330,11 +330,16 @@ export const Workbench = memo(
           // Explicitly refresh all previews after a file save
           const previewStore = usePreviewStore();
           previewStore.refreshAllPreviews();
+          
+          // Auto-switch to preview if we have one and we're currently on code view
+          if (hasPreview && selectedView === 'code') {
+            setSelectedView('preview');
+          }
         })
         .catch(() => {
           toast.error('Failed to update file content');
         });
-    }, []);
+    }, [hasPreview, selectedView]);
 
     const onFileReset = useCallback(() => {
       workbenchStore.resetCurrentDocument();
@@ -464,7 +469,30 @@ export const Workbench = memo(
                 </div>
                 <div className="relative flex-1 overflow-hidden">
                   <View initial={{ x: '0%' }} animate={{ x: selectedView === 'code' ? '0%' : '-100%' }}>
-                    {hasPreview ? (
+                    {isStreaming ? (
+                      <div className="absolute inset-0 flex">
+                        {/* Terminal invisível para inicialização, mas sempre montado */}
+                        <div className="invisible absolute inset-0 pointer-events-none">
+                          <EditorPanel
+                            editorDocument={currentDocument}
+                            isStreaming={isStreaming}
+                            selectedFile={selectedFile}
+                            files={files}
+                            unsavedFiles={unsavedFiles}
+                            fileHistory={fileHistory}
+                            onFileSelect={onFileSelect}
+                            onEditorScroll={onEditorScroll}
+                            onEditorChange={onEditorChange}
+                            onFileSave={onFileSave}
+                            onFileReset={onFileReset}
+                          />
+                        </div>
+                        {/* Tela de espera visível */}
+                        <div className="absolute inset-0">
+                          <BuildWaitingScreen />
+                        </div>
+                      </div>
+                    ) : hasPreview ? (
                       <EditorPanel
                         editorDocument={currentDocument}
                         isStreaming={isStreaming}

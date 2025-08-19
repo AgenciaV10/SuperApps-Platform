@@ -140,19 +140,33 @@ export class PreviewsStore {
   }
 
   async #init() {
-    const webcontainer = await this.#webcontainer;
+    try {
+      const webcontainer = await this.#webcontainer;
 
-    // Listen for server ready events
-    webcontainer.on('server-ready', (port, url) => {
-      console.log('[Preview] Server ready on port:', port, url);
-      this.broadcastUpdate(url);
+      // Verify webcontainer is properly initialized with all required methods
+      if (!webcontainer || 
+          typeof webcontainer.on !== 'function' || 
+          typeof webcontainer.fs !== 'object' ||
+          typeof webcontainer.spawn !== 'function') {
+        console.error('WebContainer not properly initialized or missing required methods');
+        // Retry initialization after a delay
+        setTimeout(() => this.#init(), 2000);
+        return;
+      }
 
-      // Initial storage sync when preview is ready
-      this._broadcastStorageSync();
-    });
+      console.log('WebContainer successfully initialized with all required methods');
 
-    // Listen for port events
-    webcontainer.on('port', (port, type, url) => {
+      // Listen for server ready events
+      webcontainer.on('server-ready', (port, url) => {
+        console.log('[Preview] Server ready on port:', port, url);
+        this.broadcastUpdate(url);
+
+        // Initial storage sync when preview is ready
+        this._broadcastStorageSync();
+      });
+
+      // Listen for port events
+      webcontainer.on('port', (port, type, url) => {
       let previewInfo = this.#availablePreviews.get(port);
 
       if (type === 'close' && previewInfo) {
@@ -179,6 +193,9 @@ export class PreviewsStore {
         this.broadcastUpdate(url);
       }
     });
+    } catch (error) {
+      console.error('Error initializing PreviewsStore:', error);
+    }
   }
 
   // Helper to extract preview ID from URL

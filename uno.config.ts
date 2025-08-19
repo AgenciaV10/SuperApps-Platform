@@ -111,10 +111,42 @@ export default defineConfig({
      * any conflicts with minified CSS classes.
      */
     ['b', {}],
+    // Custom rules for primary color with opacity support
+    [/^bg-primary(?:\/([0-9]+))?$/, ([, opacity]) => {
+      const baseColor = 'var(--bolt-elements-accent-purple)';
+      if (opacity) {
+        const opacityValue = parseInt(opacity) / 100;
+        return {
+          'background-color': `color-mix(in srgb, ${baseColor} ${opacity}%, transparent)`
+        };
+      }
+      return { 'background-color': baseColor };
+    }],
+    [/^text-primary(?:\/([0-9]+))?$/, ([, opacity]) => {
+      const baseColor = 'var(--bolt-elements-accent-purple)';
+      if (opacity) {
+        const opacityValue = parseInt(opacity) / 100;
+        return {
+          'color': `color-mix(in srgb, ${baseColor} ${opacity}%, transparent)`
+        };
+      }
+      return { 'color': baseColor };
+    }],
   ],
   theme: {
     colors: {
       ...COLOR_PRIMITIVES,
+      // Add primary color mapping for Tailwind compatibility
+      primary: {
+        DEFAULT: 'var(--bolt-elements-accent-purple)',
+        50: 'var(--bolt-elements-button-primary-background)',
+        100: 'var(--bolt-elements-button-primary-backgroundHover)',
+        500: 'var(--bolt-elements-accent-purple)',
+        600: 'var(--bolt-elements-accent-purple)',
+        700: 'var(--bolt-elements-accent-purple)',
+        800: 'var(--bolt-elements-accent-purple)',
+        900: 'var(--bolt-elements-accent-purple)',
+      },
       bolt: {
         elements: {
           borderColor: 'var(--bolt-elements-borderColor)',

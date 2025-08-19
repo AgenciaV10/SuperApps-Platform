@@ -67,15 +67,25 @@ const templates: Template[] = STARTER_TEMPLATES.filter((t) => !t.name.includes('
 
 const parseSelectedTemplate = (llmOutput: string): { template: string; title: string } | null => {
   try {
+    // Validate input
+    if (!llmOutput || typeof llmOutput !== 'string') {
+      console.error('Invalid llmOutput provided to parseSelectedTemplate:', llmOutput);
+      return null;
+    }
+
     // Extract content between <templateName> tags
     const templateNameMatch = llmOutput.match(/<templateName>(.*?)<\/templateName>/);
     const titleMatch = llmOutput.match(/<title>(.*?)<\/title>/);
 
-    if (!templateNameMatch) {
+    if (!templateNameMatch || !templateNameMatch[1]) {
+      console.error('No template name found in llmOutput:', llmOutput);
       return null;
     }
 
-    return { template: templateNameMatch[1].trim(), title: titleMatch?.[1].trim() || 'Untitled Project' };
+    return { 
+      template: templateNameMatch[1].trim(), 
+      title: (titleMatch && titleMatch[1]) ? titleMatch[1].trim() : 'Untitled Project' 
+    };
   } catch (error) {
     console.error('Error parsing template selection:', error);
     return null;

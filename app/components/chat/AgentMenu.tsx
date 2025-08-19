@@ -182,16 +182,7 @@ export const AgentMenu: React.FC<AgentMenuProps> = ({
 
 
 
-  // Debug log para verificar estado atual
-  useEffect(() => {
-    console.log('=== AgentMenu Debug ===');
-    console.log('View Mode:', viewMode);
-    console.log('Provider:', provider?.name);
-    console.log('Provider Models:', currentProviderModels);
-    console.log('Model Names:', modelNames);
-    console.log('Current model:', model);
-    console.log('=====================');
-  }, [viewMode, provider, currentProviderModels, modelNames, model]);
+  // Debug logs removidos para evitar spam no console
 
   return (
     <>

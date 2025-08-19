@@ -579,6 +579,11 @@ export class WorkbenchStore {
 
       if (!doc) {
         await artifact.runner.runAction(data, isStreaming);
+      } else {
+        // If document exists, only run action if not streaming to avoid duplicates
+        if (!isStreaming) {
+          await artifact.runner.runAction(data, isStreaming);
+        }
       }
 
       this.#editorStore.updateFile(fullPath, data.action.content);
@@ -590,6 +595,12 @@ export class WorkbenchStore {
       if (!isStreaming) {
         await artifact.runner.runAction(data);
         this.resetAllFileModifications();
+      } else {
+        // During streaming, only refresh previews to show changes in real-time
+        // The file action is already handled by runAction above
+        const { usePreviewStore } = await import('./previews');
+        const previewStore = usePreviewStore();
+        previewStore.refreshAllPreviews();
       }
     } else {
       await artifact.runner.runAction(data);
