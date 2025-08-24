@@ -1,4 +1,3 @@
-
 import { defineConfig } from 'unocss';
 
 const COLOR_PRIMITIVES = {
