@@ -81,15 +81,15 @@ async function llmCallAction({ context, request }: ActionFunctionArgs) {
       console.log(error);
 
       if (error instanceof Error && error.message?.includes('API key')) {
-        throw new Response('Invalid or missing API key', {
+        throw new Response('Chave de API inválida ou ausente', {
           status: 401,
-          statusText: 'Unauthorized',
+          statusText: 'Não Autorizado',
         });
       }
 
       throw new Response(null, {
         status: 500,
-        statusText: 'Internal Server Error',
+        statusText: 'Erro Interno do Servidor',
       });
     }
   } else {
@@ -141,7 +141,7 @@ async function llmCallAction({ context, request }: ActionFunctionArgs) {
 
       const errorResponse = {
         error: true,
-        message: error instanceof Error ? error.message : 'An unexpected error occurred',
+        message: error instanceof Error ? error.message : 'Ocorreu um erro inesperado',
         statusCode: (error as any).statusCode || 500,
         isRetryable: (error as any).isRetryable !== false,
         provider: (error as any).provider || 'unknown',
@@ -151,14 +151,14 @@ async function llmCallAction({ context, request }: ActionFunctionArgs) {
         return new Response(
           JSON.stringify({
             ...errorResponse,
-            message: 'Invalid or missing API key',
+            message: 'Chave de API inválida ou ausente',
             statusCode: 401,
             isRetryable: false,
           }),
           {
             status: 401,
             headers: { 'Content-Type': 'application/json' },
-            statusText: 'Unauthorized',
+            statusText: 'Não Autorizado',
           },
         );
       }
@@ -166,7 +166,7 @@ async function llmCallAction({ context, request }: ActionFunctionArgs) {
       return new Response(JSON.stringify(errorResponse), {
         status: errorResponse.statusCode,
         headers: { 'Content-Type': 'application/json' },
-        statusText: 'Error',
+        statusText: 'Erro',
       });
     }
   }

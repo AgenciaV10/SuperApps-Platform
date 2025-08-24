@@ -26,13 +26,26 @@ export default function LlmErrorAlert({ alert, clearAlert }: Props) {
   const getErrorMessage = () => {
     switch (errorType) {
       case 'authentication':
-        return `Authentication failed with ${provider}. Please check your API key.`;
+        return `Falha na autenticação com ${provider}. Verifique sua chave de API.`;
       case 'rate_limit':
-        return `Rate limit exceeded for ${provider}. Please wait before retrying.`;
+        return `Limite de taxa excedido para ${provider}. Aguarde antes de tentar novamente.`;
       case 'quota':
-        return `Quota exceeded for ${provider}. Please check your account limits.`;
+        return `Cota excedida para ${provider}. Verifique os limites da sua conta.`;
       default:
-        return 'An error occurred while processing your request.';
+        return 'Ocorreu um erro ao processar sua solicitação.';
+    }
+  };
+
+  const getErrorTitle = () => {
+    switch (errorType) {
+      case 'authentication':
+        return 'Erro de Autenticação';
+      case 'rate_limit':
+        return 'Limite de Taxa Excedido';
+      case 'quota':
+        return 'Cota Excedida';
+      default:
+        return 'Erro do Servidor';
     }
   };
 
@@ -43,7 +56,7 @@ export default function LlmErrorAlert({ alert, clearAlert }: Props) {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.3 }}
-        className="rounded-lg border border-bolt-elements-borderColor bg-bolt-elements-background-depth-2 p-4 mb-2"
+        className="rounded-xl border-2 border-red-200 bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-950/20 dark:to-orange-950/20 p-6 mb-4 shadow-lg backdrop-blur-sm"
       >
         <div className="flex items-start">
           <motion.div
@@ -52,18 +65,26 @@ export default function LlmErrorAlert({ alert, clearAlert }: Props) {
             animate={{ scale: 1 }}
             transition={{ delay: 0.2 }}
           >
-            <div className={`${getErrorIcon()} text-xl text-bolt-elements-button-danger-text`}></div>
+            <div className="relative">
+              <div className={`${getErrorIcon()} text-2xl text-red-500 drop-shadow-sm`}></div>
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-[#FF7C3F] via-[#FF4C7D] to-[#A24CFF] rounded-full animate-pulse"></div>
+            </div>
           </motion.div>
 
           <div className="ml-3 flex-1">
-            <motion.h3
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.1 }}
-              className="text-sm font-medium text-bolt-elements-textPrimary"
+              className="flex items-center gap-2 mb-1"
             >
-              {title}
-            </motion.h3>
+              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">
+                {getErrorTitle()}
+              </h3>
+              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-gradient-to-r from-[#FF7C3F] via-[#FF4C7D] to-[#A24CFF] text-white shadow-sm">
+                SuperApps
+              </span>
+            </motion.div>
 
             <motion.div
               initial={{ opacity: 0 }}
@@ -74,8 +95,8 @@ export default function LlmErrorAlert({ alert, clearAlert }: Props) {
               <p>{getErrorMessage()}</p>
 
               {description && (
-                <div className="text-xs text-bolt-elements-textSecondary p-2 bg-bolt-elements-background-depth-3 rounded mt-4 mb-4">
-                  Error Details: {description}
+                <div className="text-sm text-gray-600 dark:text-gray-300 p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg mt-3 mb-3 border border-gray-200 dark:border-gray-700">
+                  <span className="font-medium text-gray-700 dark:text-gray-200">Detalhes do erro:</span> {description}
                 </div>
               )}
             </motion.div>
@@ -89,15 +110,9 @@ export default function LlmErrorAlert({ alert, clearAlert }: Props) {
               <div className="flex gap-2">
                 <button
                   onClick={clearAlert}
-                  className={classNames(
-                    'px-2 py-1.5 rounded-md text-sm font-medium',
-                    'bg-bolt-elements-button-secondary-background',
-                    'hover:bg-bolt-elements-button-secondary-backgroundHover',
-                    'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bolt-elements-button-secondary-background',
-                    'text-bolt-elements-button-secondary-text',
-                  )}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold bg-gradient-to-r from-[#FF7C3F] via-[#FF4C7D] to-[#A24CFF] text-white hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
                 >
-                  Dismiss
+                  Dispensar
                 </button>
               </div>
             </motion.div>

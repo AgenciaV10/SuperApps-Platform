@@ -345,7 +345,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
         })();
         result.mergeIntoDataStream(dataStream);
       },
-      onError: (error: any) => `Custom error: ${error.message}`,
+      onError: (error: any) => `Erro personalizado: ${error.message}`,
     }).pipeThrough(
       new TransformStream({
         transform: (chunk, controller) => {
@@ -398,7 +398,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
 
     const errorResponse = {
       error: true,
-      message: error.message || 'An unexpected error occurred',
+      message: error.message || 'Ocorreu um erro inesperado',
       statusCode: error.statusCode || 500,
       isRetryable: error.isRetryable !== false, // Default to retryable unless explicitly false
       provider: error.provider || 'unknown',

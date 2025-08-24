@@ -1,0 +1,204 @@
+Você é um Arquiteto de Software Sênior responsável por fazer UMA AUDITORIA TÉCNICA COMPLETA do meu projeto (código-fonte e banco de dados) para preparar a implementação de um sistema de pagamentos com créditos (limite diário/mensal), bloqueio após exceder limites e upgrade via Stripe.
+
+⚠️ Antes de aplicar qualquer alteração, analise cuidadosamente o banco de dados via MCP configurado aqui no Cursor e os arquivos locais, garantindo total entendimento da lógica atual e da estrutura de dados antes de modificar qualquer coisa. 
+⚠️ Esta tarefa é SOMENTE DE LEITURA: não modifique arquivos, não rode migrações, não crie tabelas. Apenas LEIA, INVENTARIE e RELATE.
+
+OBJETIVO
+Mapear, com precisão cirúrgica, todos os pontos de integração necessários para implementar:
+1) Créditos diários (ex.: 5/dia, não acumuláveis) com teto mensal (ex.: 30/mês no plano Free).
+2) Créditos mensais de planos pagos (com possível rollover) e lógica de consumo por ordem (diário → mensal → rollover).
+3) Bloqueio do uso quando atingir limites e CTAs de upgrade.
+4) Upgrade/Downgrade/Cancel com Stripe Customer Portal e webhooks.
+5) Ponto único de "enforcement" (middleware/guard) para debitar crédito por mensagem/ação de IA.
+
+ESCOPO DA AUDITORIA
+A. Levantamento do Stack e Estrutura do Repositório
+   - Detecte framework (ex.: Next.js/Nest/Express), linguagem, versão do Node, empacotador (Vite/webpack).
+   - Estrutura de pastas: `app/`, `src/`, `pages/`, `server/`, `app/api/**`, `src/app/**`, `lib/**`, `services/**`.
+   - Dependências relevantes: auth (NextAuth/Auth.js), ORM (Prisma/Drizzle/TypeORM), banco (Postgres/Supabase/SQLite), fila (Bull/Cloud Tasks), rate limiting (Bottleneck/Upstash), Stripe/Paddle/etc.
+   - Variáveis de ambiente: liste APENAS as CHAVES (NÃO os valores). Inclua .env*, .env.local* se existirem.
+
+B. Descoberta de Pagamentos/Billing Existente
+   - Procure por integrações: `stripe`, `billing`, `subscription`, `webhook`, `checkout`, `portal`.
+   - Liste endpoints, middlewares e utilitários encontrados; diga se já há verificação de assinatura de webhook.
+   - Informe se já existe modelagem de planos/preços/créditos.
+
+C. Modelo de Identidade e Unidade de Cobrança
+   - Identifique entidades: `User`, `Workspace/Team/Project`, `Membership/Role`.
+   - Quem deve ser o dono dos créditos? (ex.: saldo por `workspace`, consumido por membros/convidados).
+   - Como a autenticação está implementada? Onde recuperamos o `workspace` ativo por requisição?
+
+D. Pontos de Entrada que Consomem Créditos (Chokepoints)
+   - Localize o(s) endpoint(s)/handler(s) que disparam ações do agente de IA (ex.: `POST /api/agent/messages`, geração de código/preview).
+   - Aponte o MELHOR ponto único para um middleware/guard de créditos.
+   - Se houver múltiplos caminhos, explique como unificá-los.
+
+E. Banco de Dados (via MCP)
+   - Utilize o conector MCP configurado (Postgres/Supabase/etc.) em MODO LEITURA.
+   - Descubra o tipo de banco (Postgres/SQLite/etc.).
+   - Rode introspecção segura:
+     * Liste todas as tabelas e colunas (nome, tipo, nulos, defaults).
+     * Liste chaves primárias/estrangeiras, índices e relacionamentos relevantes (workspace ↔ users, memberships, projects).
+     * Procure por tabelas de uso/métricas/limites (nomes como `usage`, `credits`, `plans`, `billing`, `quotas`, `rate_limit`, `stripe_*`).
+   - Para Postgres, use consultas em `information_schema`/`pg_catalog` (somente leitura). Exemplos (adapte ao dialeto):
+     1) Listar tabelas:
+        SELECT table_schema, table_name FROM information_schema.tables WHERE table_type='BASE TABLE' AND table_schema NOT IN ('pg_catalog','information_schema') ORDER BY 1,2;
+     2) Colunas:
+        SELECT table_schema, table_name, column_name, data_type, is_nullable, column_default FROM information_schema.columns WHERE table_schema NOT IN ('pg_catalog','information_schema') ORDER BY table_schema, table_name, ordinal_position;
+     3) Chaves/FKs (Postgres):
+        SELECT tc.table_schema, tc.table_name, kcu.column_name, ccu.table_schema AS foreign_table_schema, ccu.table_name AS foreign_table_name, ccu.column_name AS foreign_column_name
+        FROM information_schema.table_constraints AS tc
+        JOIN information_schema.key_column_usage AS kcu ON tc.constraint_name = kcu.constraint_name AND tc.table_schema = kcu.table_schema
+        JOIN information_schema.constraint_column_usage AS ccu ON ccu.constraint_name = tc.constraint_name AND ccu.table_schema = tc.table_schema
+        WHERE tc.constraint_type = 'FOREIGN KEY';
+   - Se MCP não estiver configurado ou o banco não responder, reporte claramente o que falta (credenciais, URL, permissões).
+
+F. Timezone/Resets/Jobs
+   - Verifique se existe configuração de timezone por workspace/usuário.
+   - Verifique se há scheduler (cron/jobs/queue) que possa ser usado para virada diária/mensal ou se será necessário “lazy reset”.
+
+G. UI/UX Existente
+   - Procure componentes que já mostrem contadores, barras de progresso, toasts, modais, “⋯” em mensagens do chat/console de geração.
+   - Aponte onde melhor encaixar: barra de créditos, tooltip por tipo de crédito, modal de bloqueio, botão “Upgrade”.
+
+H. Rate Limiting/Observabilidade
+   - Identifique qualquer limiter atual que possa conflitar/complementar o sistema de créditos.
+   - Como estão logs/telemetria? (pontos para inspecionar consumo, bloqueios e falhas de webhook).
+
+I. Segurança/Conformidade
+   - Onde as chaves são carregadas? (NÃO imprimir valores).
+   - Há verificação de assinatura de webhook Stripe?
+   - Proteção contra uso concorrente (transações/locks) onde vamos debitar créditos?
+
+FORMA DE BUSCA NO REPOSITÓRIO
+- Faça uma busca ampla por palavras-chave: 
+  ["agent", "generate", "apply", "preview", "credit", "quota", "limit", "billing", "stripe", "webhook", "portal", "workspace", "team", "project", "membership", "usage", "rate", "middleware", "guard"].
+- Liste os TOP arquivos mais relevantes (máx. 200 itens) e, para cada um, inclua trechos com `path:linhaInicial-linhaFinal` + por que é relevante.
+
+ENTREGÁVEIS (retorne exatamente nas três seções abaixo)
+1) EXECUTIVE_SUMMARY (Markdown curto e direto)
+   - Stack detectado (frontend/backend/DB/ORM/infra).
+   - Unidade de cobrança recomendada (ex.: workspace).
+   - Ponto de enforcement único recomendado (arquivo, função, rota).
+   - Presença/ausência de Stripe e webhooks.
+   - Principais lacunas para implementar o paywall.
+   - Riscos técnicos e suposições.
+   - Próximos passos de alto nível.
+
+2) FINDINGS_JSON (JSON estritamente conforme o esquema a seguir)
+{
+  "repo": {
+    "packageManagers": [],
+    "frameworks": [],
+    "language": "",
+    "nodeVersion": "",
+    "envKeys": [],
+    "importantPaths": []
+  },
+  "stack": {
+    "frontend": {"framework": "", "notes": ""},
+    "backend": {"framework": "", "runtime": "", "notes": ""},
+    "orm": {"name": "", "version": "", "notes": ""},
+    "db": {"type": "", "version": "", "urlSource": "", "notes": ""},
+    "queues": {"present": false, "libs": []},
+    "rateLimiting": {"present": false, "libs": []}
+  },
+  "auth": {
+    "lib": "",
+    "models": {"userModel": "", "sessionModel": "", "notes": ""},
+    "howWorkspaceIsResolvedPerRequest": ""
+  },
+  "workspaceModel": {
+    "entities": ["User","Workspace","Membership","Project"],
+    "tables": [],
+    "relations": [],
+    "ownershipOfCredits": "workspace|user|other",
+    "notes": ""
+  },
+  "paymentIntegrations": {
+    "stripe": {
+      "present": false,
+      "files": [],
+      "webhooks": [],
+      "portalUsage": false,
+      "priceIds": [],
+      "notes": ""
+    },
+    "others": []
+  },
+  "aiEntryPoints": [
+    {"path": "", "method": "", "handler": "", "whyChosenAsChokepoint": ""}
+  ],
+  "dbIntrospection": {
+    "tables": [
+      {"schema": "", "name": "", "columns": [{"name":"","type":"","nullable":true,"default":""}]}
+    ],
+    "foreignKeys": [
+      {"table":"", "column":"", "refTable":"", "refColumn":""}
+    ],
+    "possibleQuotaOrUsageTables": [],
+    "timezoneSupport": {"perWorkspace": false, "tables": [], "columns": []},
+    "jobsOrSchedulers": {"present": false, "tables": [], "notes": ""}
+  },
+  "limitsAndUsage": {
+    "existingLimiters": [],
+    "existingUsageTracking": [],
+    "placesToHookDebits": []
+  },
+  "uiTouchpoints": {
+    "creditBarCandidateFiles": [],
+    "modalBlockCandidateFiles": [],
+    "messageMenuFiles": [],
+    "notes": ""
+  },
+  "webhooks": {
+    "stripe": {"present": false, "file": "", "signatureCheck": false}
+  },
+  "security": {
+    "secretLoadingLocations": [],
+    "notes": ""
+  },
+  "enforcementChokepoints": [
+    {"path":"", "export":"", "why":""}
+  ],
+  "filesOfInterest": [
+    {"path":"", "lines":"100-180", "why":""}
+  ],
+  "gaps": [
+    {"id":"G1","title":"", "evidence":"path:line-range", "impact":"", "suggestedFix":"", "priority":"P0|P1|P2"}
+  ],
+  "migrationPlanSkeleton": {
+    "db": ["- tabela ...", "- índice ..."],
+    "api": ["- endpoint ..."],
+    "webhooks": ["- ..."],
+    "ui": ["- ..."],
+    "observability": ["- logs/metrics ..."]
+  },
+  "riskRegister": [
+    {"risk":"", "area":"db|api|ui|webhook|concurrency|secrets", "mitigation":""}
+  ],
+  "openQuestions": [
+    "Ex.: créditos por workspace ou por usuário?",
+    "Ex.: timezone por workspace?"
+  ],
+  "assumptions": [
+    "Ex.: cobrança por workspace."
+  ]
+}
+
+3) APPENDICES (Markdown)
+   - A. Lista expandida de ocorrências de busca (keyword → arquivos).
+   - B. Trechos de código importantes (máx. 30) com `path:linhaInicial-linhaFinal` e contexto de até 40 linhas cada.
+   - C. Resultados de introspecção SQL (resumidos e legíveis). Se o dump for grande, agregue por tabela.
+
+CONDIÇÕES E BOAS PRÁTICAS
+- NÃO exponha segredos (.env valores). Liste apenas nomes das chaves.
+- Se algum diretório estiver ausente, reporte explicitamente.
+- Se o MCP de banco não estiver configurado, detalhe o que falta (host, db, user, perms) e continue a auditoria apenas do código.
+- Seja preciso nas referências: use `path:linhaInicial-linhaFinal`.
+- Limite a verbosidade: priorize o que impacta a implementação do paywall de créditos e Stripe.
+
+Ao finalizar, retorne EXATAMENTE nas três seções: 
+(1) EXECUTIVE_SUMMARY, 
+(2) FINDINGS_JSON, 
+(3) APPENDICES.

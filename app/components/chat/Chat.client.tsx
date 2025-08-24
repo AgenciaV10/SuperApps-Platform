@@ -272,7 +272,7 @@ export const ChatImpl = memo(
         setFakeLoading(false);
 
         let errorInfo = {
-          message: 'An unexpected error occurred',
+          message: 'Ocorreu um erro inesperado',
           isRetryable: true,
           statusCode: 500,
           provider: provider.name,
@@ -295,20 +295,20 @@ export const ChatImpl = memo(
         }
 
         let errorType: LlmErrorAlertType['errorType'] = 'unknown';
-        let title = 'Request Failed';
+        let title = 'Falha na Solicitação';
 
         if (errorInfo.statusCode === 401 || errorInfo.message.toLowerCase().includes('api key')) {
           errorType = 'authentication';
-          title = 'Authentication Error';
+          title = 'Erro de Autenticação';
         } else if (errorInfo.statusCode === 429 || errorInfo.message.toLowerCase().includes('rate limit')) {
           errorType = 'rate_limit';
-          title = 'Rate Limit Exceeded';
+          title = 'Limite de Taxa Excedido';
         } else if (errorInfo.message.toLowerCase().includes('quota')) {
           errorType = 'quota';
-          title = 'Quota Exceeded';
+          title = 'Cota Excedida';
         } else if (errorInfo.statusCode >= 500) {
           errorType = 'network';
-          title = 'Server Error';
+          title = 'Erro do Servidor';
         }
 
         logStore.logError(`${context} request failed`, error, {

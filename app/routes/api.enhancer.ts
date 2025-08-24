@@ -123,15 +123,15 @@ async function enhancerAction({ context, request }: ActionFunctionArgs) {
     console.log(error);
 
     if (error instanceof Error && error.message?.includes('API key')) {
-      throw new Response('Invalid or missing API key', {
+      throw new Response('Chave de API inválida ou ausente', {
         status: 401,
-        statusText: 'Unauthorized',
+        statusText: 'Não Autorizado',
       });
     }
 
     throw new Response(null, {
       status: 500,
-      statusText: 'Internal Server Error',
+      statusText: 'Erro Interno do Servidor',
     });
   }
 }

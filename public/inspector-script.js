@@ -181,13 +181,15 @@
     if (!target || target === document.body || target === document.documentElement) return;
 
     // Remove previous highlight
-    if (currentHighlight) {
+    if (currentHighlight && currentHighlight.classList) {
       currentHighlight.classList.remove('inspector-highlight');
     }
     
     // Add highlight to current element
-    target.classList.add('inspector-highlight');
-    currentHighlight = target;
+    if (target && target.classList) {
+      target.classList.add('inspector-highlight');
+      currentHighlight = target;
+    }
 
     const elementInfo = createElementInfo(target);
     
@@ -220,7 +222,7 @@
     if (!isInspectorActive) return;
     
     // Remove highlight
-    if (currentHighlight) {
+    if (currentHighlight && currentHighlight.classList) {
       currentHighlight.classList.remove('inspector-highlight');
       currentHighlight = null;
     }
@@ -262,7 +264,7 @@
       document.body.classList.remove('inspector-active');
       
       // Remove highlight
-      if (currentHighlight) {
+      if (currentHighlight && currentHighlight.classList) {
         currentHighlight.classList.remove('inspector-highlight');
         currentHighlight = null;
       }

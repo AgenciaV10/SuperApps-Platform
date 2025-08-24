@@ -12,9 +12,9 @@ export const TOOL_EXECUTION_APPROVAL = {
   APPROVE: 'Yes, approved.',
   REJECT: 'No, rejected.',
 } as const;
-export const TOOL_NO_EXECUTE_FUNCTION = 'Error: No execute function found on tool';
-export const TOOL_EXECUTION_DENIED = 'Error: User denied access to tool execution';
-export const TOOL_EXECUTION_ERROR = 'Error: An error occured while calling tool';
+export const TOOL_NO_EXECUTE_FUNCTION = 'Erro: Nenhuma função de execução encontrada na ferramenta';
+export const TOOL_EXECUTION_DENIED = 'Erro: Usuário negou acesso à execução da ferramenta';
+export const TOOL_EXECUTION_ERROR = 'Erro: Ocorreu um erro ao chamar a ferramenta';
 
 const llmManager = LLMManager.getInstance(import.meta.env);
 
