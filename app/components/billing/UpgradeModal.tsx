@@ -86,7 +86,7 @@ export function UpgradeModal({ isOpen, onClose, currentPlan = 'free' }: UpgradeM
         throw new Error(`Failed to create checkout session: ${response.statusText}`);
       }
 
-      const { url } = await response.json();
+      const { url } = await response.json() as { url: string };
       
       if (url) {
         window.location.href = url;
@@ -119,7 +119,7 @@ export function UpgradeModal({ isOpen, onClose, currentPlan = 'free' }: UpgradeM
         throw new Error(`Failed to create portal session: ${response.statusText}`);
       }
 
-      const { url } = await response.json();
+      const { url } = await response.json() as { url: string };
       
       if (url) {
         window.location.href = url;

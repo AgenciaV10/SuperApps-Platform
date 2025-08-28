@@ -54,7 +54,7 @@ export function CreditDisplay({ className = '', showDetails = false }: CreditDis
         throw new Error(`Failed to fetch usage: ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const data = await response.json() as UserUsage;
       setUsage(data);
     } catch (err) {
       logger.error('Failed to fetch user usage', err);

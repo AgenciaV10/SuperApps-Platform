@@ -142,8 +142,8 @@ function UserMenu() {
                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs border border-black/10 dark:border-white/15 bg-black/5 dark:bg-white/5">
                     {planLoading ? 'Carregando…' : planName || 'Free'}
                   </span>
-                  <a href="#" className="text-xs text-bolt-elements-item-contentAccent hover:underline">Gerenciar plano</a>
-                  <a href="#" className="ml-auto text-xs text-bolt-elements-item-contentAccent hover:underline">Histórico de pagamentos</a>
+                  <a href="/billing/manage" className="text-xs text-bolt-elements-item-contentAccent hover:underline">Gerenciar plano</a>
+                  <a href="/billing/history" className="ml-auto text-xs text-bolt-elements-item-contentAccent hover:underline">Histórico de pagamentos</a>
                 </div>
               </div>
               <div className="px-3 py-2">

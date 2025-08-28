@@ -70,9 +70,9 @@ export async function getUserUsage(userId: string): Promise<UserUsage | null> {
     remainingBudget: data.remaining_budget || 0,
     planStartDate: data.plan_start_date || new Date().toISOString(),
     plan: {
-      dailyAllowance: data.plans.daily_allowance,
-      monthlyInteractionCap: data.plans.monthly_interaction_cap,
-      monthlyTokenCap: data.plans.monthly_token_cap,
+      dailyAllowance: data.plans[0]?.daily_allowance || 0,
+      monthlyInteractionCap: data.plans[0]?.monthly_interaction_cap || 0,
+      monthlyTokenCap: data.plans[0]?.monthly_token_cap || 0,
     },
   };
 }

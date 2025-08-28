@@ -1,4 +1,4 @@
-import { json, type LoaderFunctionArgs } from '@remix-run/node';
+import { json, type LoaderFunctionArgs } from '@remix-run/cloudflare';
 
 export const loader = async ({ request: _request }: LoaderFunctionArgs) => {
   try {

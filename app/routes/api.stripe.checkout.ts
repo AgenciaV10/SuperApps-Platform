@@ -9,7 +9,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
   try {
     const user = await requireAuth(request);
-    const { priceId } = await request.json();
+    const { priceId } = await request.json() as { priceId: string };
 
     if (!priceId || typeof priceId !== 'string') {
       return json({ error: 'Price ID is required' }, { status: 400 });
