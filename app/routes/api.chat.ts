@@ -389,12 +389,12 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
             logger.info(`Reached max token limit (${MAX_TOKENS}): Continuing message (${switchesLeft} switches left)`);
 
             const lastUserMessage = processedMessages.filter((x) => x.role == 'user').slice(-1)[0];
-            const { model, provider } = extractPropertiesFromMessage(lastUserMessage);
+            const { model: continueModel, provider: continueProvider } = extractPropertiesFromMessage(lastUserMessage);
             processedMessages.push({ id: generateId(), role: 'assistant', content });
             processedMessages.push({
               id: generateId(),
               role: 'user',
-              content: `[Model: ${model}]\n\n[Provider: ${provider}]\n\n${CONTINUE_PROMPT}`,
+              content: `[Model: ${continueModel}]\n\n[Provider: ${continueProvider}]\n\n${CONTINUE_PROMPT}`,
             });
 
             const result = await streamText({

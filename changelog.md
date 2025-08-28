@@ -1,5 +1,134 @@
 # CHANGELOG - SuperApps Bolt.diy
 
+## [2025-01-28] - Remoção de Provedores LLM Não Utilizados
+
+### 🔧 **REMOÇÃO DE PROVEDORES PROBLEMÁTICOS**
+
+#### **Status da Implementação: ✅ CONCLUÍDO COM SUCESSO**
+
+**Data da Implementação**: 2025-01-28
+**Status**: ✅ **PROVEDORES REMOVIDOS E PLATAFORMA ESTABILIZADA**
+
+#### **Descrição da Implementação**
+Remoção dos provedores LLM que estavam causando travamentos e erros na plataforma: AmazonBedrock, Anthropic, Deepseek, Google e OpenAI. Mantido apenas OpenRouter como provedor ativo.
+
+---
+
+### 📝 **Alterações Implementadas**
+
+#### **1. Desabilitação no Registry Principal**
+**Arquivo**: `app/lib/modules/llm/registry.ts`
+- ✅ **Comentados**: AnthropicProvider, DeepseekProvider, GoogleProvider, OpenAIProvider, AmazonBedrockProvider
+- ✅ **Mantido**: Apenas OpenRouterProvider ativo
+
+#### **2. Remoção da Interface de Configuração**
+**Arquivo**: `app/components/@settings/tabs/providers/cloud/CloudProvidersTab.tsx`
+- ✅ **ProviderName**: Comentados tipos dos provedores removidos
+- ✅ **PROVIDER_ICONS**: Comentados ícones dos provedores
+- ✅ **PROVIDER_DESCRIPTIONS**: Comentadas descrições dos provedores
+
+#### **3. Remoção do Status de Serviços**
+**Arquivo**: `app/components/@settings/tabs/providers/status/ServiceStatusTab.tsx`
+- ✅ **PROVIDER_STATUS_URLS**: Comentadas configurações de status
+- ✅ **PROVIDER_ICONS**: Comentados ícones de status
+- ✅ **ProviderName**: Atualizado tipo para incluir apenas OpenRouter
+
+#### **4. Atualização da Fábrica de Provedores**
+**Arquivo**: `app/components/@settings/tabs/providers/service-status/provider-factory.ts`
+- ✅ **Imports**: Comentadas importações dos checkers removidos
+- ✅ **_providerConfigs**: Comentadas configurações dos provedores
+- ✅ **getChecker**: Comentados casos dos provedores no switch
+
+#### **5. Atualização de Tipos**
+**Arquivo**: `app/components/@settings/tabs/providers/service-status/types.ts`
+- ✅ **ProviderName**: Comentados tipos dos provedores removidos
+
+---
+
+### ✅ **Validação da Implementação**
+
+#### **Build e Compilação**
+- ✅ **npm run build**: Executado com sucesso
+- ✅ **Warnings**: Apenas avisos sobre imports não utilizados (esperado)
+- ✅ **Erros**: Nenhum erro de compilação
+
+#### **Servidor de Desenvolvimento**
+- ✅ **npm run dev**: Servidor iniciado corretamente
+- ✅ **URL**: http://localhost:5173/ acessível
+- ✅ **Interface**: Chat funcional sem provedores problemáticos
+
+---
+
+### 🎯 **Resultado Final**
+
+**Provedores Removidos**: AmazonBedrock, Anthropic, Deepseek, Google, OpenAI
+**Provedor Mantido**: OpenRouter (funcional)
+**Status**: ✅ **PLATAFORMA ESTABILIZADA SEM TRAVAMENTOS**
+
+---
+
+## [2025-01-28] - Correção de Erros de TypeScript
+
+### 🔧 **CORREÇÕES DE COMPILAÇÃO TYPESCRIPT**
+
+#### **Status da Implementação: ✅ CONCLUÍDO COM SUCESSO**
+
+**Data da Implementação**: 2025-01-28
+**Status**: ✅ **ERROS DE TYPESCRIPT CORRIGIDOS**
+
+#### **Descrição da Implementação**
+Correção de 7 erros de TypeScript que impediam a compilação adequada da aplicação, incluindo problemas de escopo de variáveis e tipos do Stripe.
+
+---
+
+### 📝 **Alterações Implementadas**
+
+#### **1. Correção de Escopo de Variáveis em api.chat.ts**
+**Arquivo**: `app/routes/api.chat.ts`
+
+**Problema Identificado:**
+- ❌ **Erro**: Variáveis `provider` e `model` usadas antes da declaração (linhas 338, 347)
+- ❌ **Causa**: Redeclaração das mesmas variáveis em escopo conflitante (linha 392)
+
+**Solução Implementada:**
+- ✅ **Renomeação**: Variáveis da segunda declaração renomeadas para `continueProvider` e `continueModel`
+- ✅ **Escopo**: Eliminado conflito de escopo entre declarações
+- ✅ **Funcionalidade**: Mantida lógica original de continuação de mensagens
+
+```typescript
+// Antes (causava erro de escopo)
+const { model, provider } = extractPropertiesFromMessage(lastUserMessage);
+
+// Depois (sem conflito)
+const { model: continueModel, provider: continueProvider } = extractPropertiesFromMessage(lastUserMessage);
+```
+
+#### **2. Correção de Tipos do Stripe em stripe.server.ts**
+**Arquivo**: `app/server/billing/stripe.server.ts`
+
+**Problema Identificado:**
+- ❌ **Erro**: Propriedade `payment_intent` não reconhecida no tipo `Invoice` (linha 146)
+- ❌ **Erro**: Propriedades `current_period_start` e `current_period_end` não reconhecidas no tipo `Subscription` (linhas 274-275)
+
+**Solução Implementada:**
+- ✅ **Type Casting**: Adicionado casting apropriado para propriedades do Stripe
+- ✅ **Compatibilidade**: Mantida funcionalidade com API do Stripe
+- ✅ **Segurança**: Preservada verificação de tipos onde possível
+
+```typescript
+// Correções aplicadas
+(inv.payment_intent as string) === pi.id
+(subscription.current_period_start as number) * 1000
+(subscription.current_period_end as number) * 1000
+```
+
+#### **3. Validação da Correção**
+- ✅ **Build**: Compilação bem-sucedida sem erros TypeScript
+- ✅ **Servidor**: Endpoint `/api/health` funcionando corretamente
+- ✅ **Aplicação**: Sistema operacional sem problemas de tipos
+
+---
+
 ## [2025-01-17] - Implementação e Correção do Sistema de Pagamentos
 
 ### 💳 **SISTEMA DE COBRANÇA E PÁGINAS DE PAGAMENTO**

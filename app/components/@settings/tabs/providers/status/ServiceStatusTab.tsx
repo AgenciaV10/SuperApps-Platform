@@ -14,15 +14,15 @@ import { useToast } from '~/components/ui/use-toast';
 
 // Types
 type ProviderName =
-  | 'AmazonBedrock'
-  | 'Anthropic'
+  // | 'AmazonBedrock'
+  // | 'Anthropic'
   // | 'Cohere'
-  | 'Deepseek'
-  | 'Google'
+  // | 'Deepseek'
+  // | 'Google'
   // | 'Groq'
   // | 'HuggingFace'
   // | 'Mistral'
-  | 'OpenAI'
+  // | 'OpenAI'
   | 'OpenRouter'
   // | 'Perplexity'
   // | 'Together'
@@ -65,23 +65,23 @@ type ApiResponse = {
 
 // Constants
 const PROVIDER_STATUS_URLS: Record<ProviderName, ProviderConfig> = {
-  OpenAI: {
-    statusUrl: 'https://status.openai.com/',
-    apiUrl: 'https://api.openai.com/v1/models',
-    headers: {
-      Authorization: 'Bearer $OPENAI_API_KEY',
-    },
-    testModel: 'gpt-3.5-turbo',
-  },
-  Anthropic: {
-    statusUrl: 'https://status.anthropic.com/',
-    apiUrl: 'https://api.anthropic.com/v1/messages',
-    headers: {
-      'x-api-key': '$ANTHROPIC_API_KEY',
-      'anthropic-version': '2024-02-29',
-    },
-    testModel: 'claude-3-sonnet-20240229',
-  },
+  // OpenAI: {
+  //   statusUrl: 'https://status.openai.com/',
+  //   apiUrl: 'https://api.openai.com/v1/models',
+  //   headers: {
+  //     Authorization: 'Bearer $OPENAI_API_KEY',
+  //   },
+  //   testModel: 'gpt-3.5-turbo',
+  // },
+  // Anthropic: {
+  //   statusUrl: 'https://status.anthropic.com/',
+  //   apiUrl: 'https://api.anthropic.com/v1/messages',
+  //   headers: {
+  //     'x-api-key': '$ANTHROPIC_API_KEY',
+  //     'anthropic-version': '2024-02-29',
+  //   },
+  //   testModel: 'claude-3-sonnet-20240229',
+  // },
   // Cohere: {
   //   statusUrl: 'https://status.cohere.com/',
   //   apiUrl: 'https://api.cohere.ai/v1/models',
@@ -90,14 +90,14 @@ const PROVIDER_STATUS_URLS: Record<ProviderName, ProviderConfig> = {
   //   },
   //   testModel: 'command',
   // },
-  Google: {
-    statusUrl: 'https://status.cloud.google.com/',
-    apiUrl: 'https://generativelanguage.googleapis.com/v1/models',
-    headers: {
-      'x-goog-api-key': '$GOOGLE_API_KEY',
-    },
-    testModel: 'gemini-pro',
-  },
+  // Google: {
+  //   statusUrl: 'https://status.cloud.google.com/',
+  //   apiUrl: 'https://generativelanguage.googleapis.com/v1/models',
+  //   headers: {
+  //     'x-goog-api-key': '$GOOGLE_API_KEY',
+  //   },
+  //   testModel: 'gemini-pro',
+  // },
   // HuggingFace: {
   //   statusUrl: 'https://status.huggingface.co/',
   //   apiUrl: 'https://api-inference.huggingface.co/models',
@@ -130,14 +130,14 @@ const PROVIDER_STATUS_URLS: Record<ProviderName, ProviderConfig> = {
   //   },
   //   testModel: 'mistralai/Mixtral-8x7B-Instruct-v0.1',
   // },
-  AmazonBedrock: {
-    statusUrl: 'https://health.aws.amazon.com/health/status',
-    apiUrl: 'https://bedrock.us-east-2.amazonaws.com/models',
-    headers: {
-      Authorization: 'Bearer $AWS_BEDROCK_CONFIG',
-    },
-    testModel: 'us.anthropic.claude-3-5-sonnet-20240620-v1:0',
-  },
+  // AmazonBedrock: {
+  //   statusUrl: 'https://health.aws.amazon.com/health/status',
+  //   apiUrl: 'https://bedrock.us-east-2.amazonaws.com/models',
+  //   headers: {
+  //     Authorization: 'Bearer $AWS_BEDROCK_CONFIG',
+  //   },
+  //   testModel: 'us.anthropic.claude-3-5-sonnet-20240620-v1:0',
+  // },
   // Groq: {
   //   statusUrl: 'https://groqstatus.com/',
   //   apiUrl: 'https://api.groq.com/v1/models',
@@ -162,30 +162,30 @@ const PROVIDER_STATUS_URLS: Record<ProviderName, ProviderConfig> = {
   //   },
   //   testModel: 'grok-1',
   // },
-  Deepseek: {
-    statusUrl: 'https://status.deepseek.com/',
-    apiUrl: 'https://api.deepseek.com/v1/models',
-    headers: {
-      Authorization: 'Bearer $DEEPSEEK_API_KEY',
-    },
-    testModel: 'deepseek-chat',
-  },
+  // Deepseek: {
+  //   statusUrl: 'https://status.deepseek.com/',
+  //   apiUrl: 'https://api.deepseek.com/v1/models',
+  //   headers: {
+  //     Authorization: 'Bearer $DEEPSEEK_API_KEY',
+  //   },
+  //   testModel: 'deepseek-chat',
+  // },
 };
 
 const PROVIDER_ICONS: Record<ProviderName, IconType> = {
-  AmazonBedrock: SiAmazon,
-  Anthropic: FaBrain,
+  // AmazonBedrock: SiAmazon,
+  // Anthropic: FaBrain,
   // Cohere: BiChip,
-  Google: SiGoogle,
+  // Google: SiGoogle,
   // Groq: BsCloud,
   // HuggingFace: SiHuggingface,
   // Mistral: TbBrain,
-  OpenAI: SiOpenai,
+  // OpenAI: SiOpenai,
   OpenRouter: FaCloud,
   // Perplexity: SiPerplexity,
   // Together: BsCloud,
   // XAI: BsRobot,
-  Deepseek: BiCodeBlock,
+  // Deepseek: BiCodeBlock,
 };
 
 const ServiceStatusTab = () => {

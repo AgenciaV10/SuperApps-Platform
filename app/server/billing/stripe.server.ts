@@ -143,7 +143,7 @@ export async function getPaymentHistory(userId: string): Promise<{
     const payments = paymentIntents.data.map((pi) => {
       // Tentar encontrar invoice relacionada
       const relatedInvoice = invoices.data.find(inv => 
-        inv.payment_intent === pi.id
+        (inv.payment_intent as string) === pi.id
       );
 
       return {
@@ -271,8 +271,8 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription): Prom
     return;
   }
 
-  const billingPeriodStart = new Date(subscription.current_period_start * 1000).toISOString();
-  const billingPeriodEnd = new Date(subscription.current_period_end * 1000).toISOString();
+  const billingPeriodStart = new Date((subscription.current_period_start as number) * 1000).toISOString();
+  const billingPeriodEnd = new Date((subscription.current_period_end as number) * 1000).toISOString();
 
   await supabase
     .from('users')

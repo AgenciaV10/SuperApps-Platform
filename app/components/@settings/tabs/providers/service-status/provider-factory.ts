@@ -1,10 +1,10 @@
 import type { ProviderName, ProviderConfig, StatusCheckResult } from './types';
 import { BaseProviderChecker } from './base-provider';
 
-import { AmazonBedrockStatusChecker } from './providers/amazon-bedrock';
+// import { AmazonBedrockStatusChecker } from './providers/amazon-bedrock';
 // import { CohereStatusChecker } from './providers/cohere';
-import { DeepseekStatusChecker } from './providers/deepseek';
-import { GoogleStatusChecker } from './providers/google';
+// import { DeepseekStatusChecker } from './providers/deepseek';
+// import { GoogleStatusChecker } from './providers/google';
 // import { GroqStatusChecker } from './providers/groq';
 // import { HuggingFaceStatusChecker } from './providers/huggingface';
 // import { HyperbolicStatusChecker } from './providers/hyperbolic';
@@ -16,30 +16,30 @@ import { OpenRouterStatusChecker } from './providers/openrouter';
 
 export class ProviderStatusCheckerFactory {
   private static _providerConfigs: Record<ProviderName, ProviderConfig> = {
-    AmazonBedrock: {
-      statusUrl: 'https://health.aws.amazon.com/health/status',
-      apiUrl: 'https://bedrock.us-east-2.amazonaws.com/models',
-      headers: {},
-      testModel: 'us.anthropic.claude-3-5-sonnet-20240620-v1:0',
-    },
+    // AmazonBedrock: {
+    //   statusUrl: 'https://health.aws.amazon.com/health/status',
+    //   apiUrl: 'https://bedrock.us-east-2.amazonaws.com/models',
+    //   headers: {},
+    //   testModel: 'us.anthropic.claude-3-5-sonnet-20240620-v1:0',
+    // },
     // Cohere: {
     //   statusUrl: 'https://status.cohere.com/',
     //   apiUrl: 'https://api.cohere.ai/v1/models',
     //   headers: {},
     //   testModel: 'command',
     // },
-    Deepseek: {
-      statusUrl: 'https://status.deepseek.com/',
-      apiUrl: 'https://api.deepseek.com/v1/models',
-      headers: {},
-      testModel: 'deepseek-chat',
-    },
-    Google: {
-      statusUrl: 'https://status.cloud.google.com/',
-      apiUrl: 'https://generativelanguage.googleapis.com/v1/models',
-      headers: {},
-      testModel: 'gemini-pro',
-    },
+    // Deepseek: {
+    //   statusUrl: 'https://status.deepseek.com/',
+    //   apiUrl: 'https://api.deepseek.com/v1/models',
+    //   headers: {},
+    //   testModel: 'deepseek-chat',
+    // },
+    // Google: {
+    //   statusUrl: 'https://status.cloud.google.com/',
+    //   apiUrl: 'https://generativelanguage.googleapis.com/v1/models',
+    //   headers: {},
+    //   testModel: 'gemini-pro',
+    // },
     // Groq: {
     //   statusUrl: 'https://groqstatus.com/',
     //   apiUrl: 'https://api.groq.com/v1/models',
@@ -98,25 +98,25 @@ export class ProviderStatusCheckerFactory {
     }
 
     switch (provider) {
-      case 'AmazonBedrock':
-        return new AmazonBedrockStatusChecker(config);
-      case 'Cohere':
-        return new (class extends BaseProviderChecker {
-          async checkStatus(): Promise<StatusCheckResult> {
-            const endpointStatus = await this.checkEndpoint(this.config.statusUrl);
-            const apiStatus = await this.checkEndpoint(this.config.apiUrl);
+      // case 'AmazonBedrock':
+      //   return new AmazonBedrockStatusChecker(config);
+      // case 'Cohere':
+      //   return new (class extends BaseProviderChecker {
+      //     async checkStatus(): Promise<StatusCheckResult> {
+      //       const endpointStatus = await this.checkEndpoint(this.config.statusUrl);
+      //       const apiStatus = await this.checkEndpoint(this.config.apiUrl);
 
-            return {
-              status: endpointStatus === 'reachable' && apiStatus === 'reachable' ? 'operational' : 'degraded',
-              message: `Status page: ${endpointStatus}, API: ${apiStatus}`,
-              incidents: ['Note: Limited status information due to CORS restrictions'],
-            };
-          }
-        })(config);
-      case 'Deepseek':
-        return new DeepseekStatusChecker(config);
-      case 'Google':
-        return new GoogleStatusChecker(config);
+      //       return {
+      //         status: endpointStatus === 'reachable' && apiStatus === 'reachable' ? 'operational' : 'degraded',
+      //         message: `Status page: ${endpointStatus}, API: ${apiStatus}`,
+      //         incidents: ['Note: Limited status information due to CORS restrictions'],
+      //       };
+      //     }
+      //   })(config);
+      // case 'Deepseek':
+      //   return new DeepseekStatusChecker(config);
+      // case 'Google':
+      //   return new GoogleStatusChecker(config);
       case 'Groq':
         return new (class extends BaseProviderChecker {
           async checkStatus(): Promise<StatusCheckResult> {
