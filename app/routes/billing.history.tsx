@@ -2,6 +2,7 @@ import { json, type LoaderFunctionArgs } from '@remix-run/cloudflare';
 import { useLoaderData } from '@remix-run/react';
 import { optionalAuth } from '~/lib/auth/middleware';
 import { getSupabaseClient } from '~/lib/supabase/client';
+import { getPaymentHistory } from '~/server/billing/stripe.server';
 import { logger } from '~/utils/logger';
 import { Header } from '~/components/header/Header';
 
@@ -49,26 +50,25 @@ export async function loader({ request }: LoaderFunctionArgs) {
       throw new Error('Failed to load user data');
     }
 
-    // For now, return mock data since we don't have Stripe integration for payment history
-    // In a real implementation, you would fetch from Stripe API
-    const mockPayments: PaymentHistory[] = userData?.stripe_customer_id ? [
-      {
-        id: 'pi_mock_1',
-        amount: 5900,
-        currency: 'brl',
-        status: 'succeeded',
-        created: Date.now() - 30 * 24 * 60 * 60 * 1000, // 30 days ago
-        description: 'Assinatura Personal - Janeiro 2025'
-      },
-      {
-        id: 'pi_mock_2',
-        amount: 5900,
-        currency: 'brl',
-        status: 'succeeded',
-        created: Date.now() - 60 * 24 * 60 * 60 * 1000, // 60 days ago
-        description: 'Assinatura Personal - Dezembro 2024'
+    // Buscar histórico real de pagamentos do Stripe
+    let payments: PaymentHistory[] = [];
+    
+    if (userData?.stripe_customer_id) {
+      try {
+        payments = await getPaymentHistory(user.id);
+        logger.debug('Successfully fetched payment history', { 
+          userId: user.id, 
+          paymentCount: payments.length 
+        });
+      } catch (error) {
+        logger.error('Failed to fetch payment history from Stripe', { 
+          userId: user.id, 
+          error 
+        });
+        // Em caso de erro, continuar com array vazio
+        payments = [];
       }
-    ] : [];
+    }
 
     return json({
       user: {
@@ -77,7 +77,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         plan_id: userData?.plan_id || 'free',
         stripe_customer_id: userData?.stripe_customer_id,
       },
-      payments: mockPayments,
+      payments,
     });
   } catch (error) {
     logger.error('Billing history loader error', error);

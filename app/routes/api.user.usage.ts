@@ -64,10 +64,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
     // Transform the data to match the expected format
     const responseData = {
       dailyInteractions: usage.dailyRequestCount,
-      monthlyInteractions: usage.dailyRequestCount, // This should be calculated properly
+      monthlyInteractions: usage.monthlyInteractionCount,
       monthlyTokens: usage.dailyUsage,
       plan: {
-        name: 'Free', // This should come from the plan data
+        name: usage.plan.name,
         daily_allowance: usage.plan.dailyAllowance,
         monthly_interaction_cap: usage.plan.monthlyInteractionCap,
         monthly_token_cap: usage.plan.monthlyTokenCap,

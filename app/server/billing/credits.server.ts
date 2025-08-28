@@ -16,9 +16,11 @@ export interface UserUsage {
   dailyUsage: number;
   dailyUsageDate: string;
   dailyRequestCount: number;
+  monthlyInteractionCount: number;
   remainingBudget: number;
   planStartDate: string;
   plan: {
+    name: string;
     dailyAllowance: number;
     monthlyInteractionCap: number;
     monthlyTokenCap: number;
@@ -48,6 +50,7 @@ export async function getUserUsage(userId: string): Promise<UserUsage | null> {
       remaining_budget,
       plan_start_date,
       plans!inner(
+        name,
         daily_allowance,
         monthly_interaction_cap,
         monthly_token_cap
@@ -61,15 +64,34 @@ export async function getUserUsage(userId: string): Promise<UserUsage | null> {
     return null;
   }
 
+  // Calcular uso mensal real baseado na tabela credit_ledger
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+
+  const { data: monthlyUsageData, error: monthlyError } = await supabase
+    .from('credit_ledger')
+    .select('amount')
+    .eq('user_id', userId)
+    .gte('created_at', monthStart.toISOString());
+
+  const monthlyInteractionCount = monthlyUsageData?.reduce((total, record) => total + (record.amount || 0), 0) || 0;
+
+  if (monthlyError) {
+    console.error('Error fetching monthly usage:', monthlyError);
+  }
+
   return {
     userId: data.id,
     planId: data.plan_id,
     dailyUsage: data.daily_usage || 0,
     dailyUsageDate: data.daily_usage_date || new Date().toISOString().split('T')[0],
     dailyRequestCount: data.daily_request_count || 0,
+    monthlyInteractionCount,
     remainingBudget: data.remaining_budget || 0,
     planStartDate: data.plan_start_date || new Date().toISOString(),
     plan: {
+      name: data.plans[0]?.name || 'Free',
       dailyAllowance: data.plans[0]?.daily_allowance || 0,
       monthlyInteractionCap: data.plans[0]?.monthly_interaction_cap || 0,
       monthlyTokenCap: data.plans[0]?.monthly_token_cap || 0,
@@ -126,6 +148,45 @@ export async function canUserInteract(userId: string): Promise<{ canInteract: bo
   }
 
   return { canInteract: true, usage };
+}
+
+/**
+ * Registra o uso de tokens na tabela usage_log
+ */
+export async function logTokenUsage(
+  userId: string,
+  requestId: string,
+  modelUsed: string,
+  tokensUsed: number,
+  costInUsd: number,
+  requestType: string = 'chat'
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    // Converter USD para BRL (taxa aproximada de 5.5)
+    const costInReais = costInUsd * 5.5;
+
+    const { error } = await supabase
+      .from('usage_log')
+      .insert({
+        user_id: userId,
+        request_id: requestId,
+        model_used: modelUsed,
+        tokens_used: tokensUsed,
+        cost_in_usd: costInUsd,
+        cost_in_reais: costInReais,
+        request_type: requestType
+      });
+
+    if (error) {
+      console.error('Error logging token usage:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Unexpected error logging token usage:', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  }
 }
 
 /**

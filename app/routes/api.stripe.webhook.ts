@@ -15,7 +15,7 @@ export async function action({ request }: ActionFunctionArgs) {
     }
 
     // Verificar assinatura do webhook
-    const event = verifyWebhookSignature(body, signature);
+    const event = await verifyWebhookSignature(body, signature);
 
     // Processar evento
     await processWebhookEvent(event);

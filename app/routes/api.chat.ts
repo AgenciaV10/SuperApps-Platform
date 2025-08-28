@@ -14,7 +14,7 @@ import { extractPropertiesFromMessage } from '~/lib/.server/llm/utils';
 import type { DesignScheme } from '~/types/design-scheme';
 import { MCPService } from '~/lib/services/mcpService';
 import { optionalAuth } from '~/lib/auth/middleware';
-import { canUserInteract, debitUserInteraction, calculateTotalTokens } from '~/server/billing/credits.server';
+import { canUserInteract, debitUserInteraction, calculateTotalTokens, logTokenUsage } from '~/server/billing/credits.server';
 
 export async function action(args: ActionFunctionArgs) {
   return chatAction(args);
@@ -303,6 +303,10 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
           // logger.debug('Code Files Selected');
         }
 
+        // Extract model and provider for logging
+        const lastUserMessage = processedMessages.filter((x) => x.role == 'user').slice(-1)[0];
+        const { model, provider } = extractPropertiesFromMessage(lastUserMessage);
+
         const options: StreamingOptions = {
           supabaseConnection: supabase,
           toolChoice: 'auto',
@@ -321,6 +325,37 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
               cumulativeUsage.completionTokens += usage.completionTokens || 0;
               cumulativeUsage.promptTokens += usage.promptTokens || 0;
               cumulativeUsage.totalTokens += usage.totalTokens || 0;
+
+              // Log token usage for authenticated users
+               if (authResult.isAuthenticated && authResult.user) {
+                 try {
+                   // Estimate cost based on tokens (rough estimate: $0.002 per 1K tokens)
+                   const estimatedCost = (cumulativeUsage.totalTokens || 0) * 0.000002;
+                   
+                   await logTokenUsage(
+                     authResult.user.id,
+                     requestId,
+                     `${provider}:${model}`,
+                     cumulativeUsage.totalTokens || 0,
+                     estimatedCost,
+                     'chat'
+                   );
+                   
+                   logger.debug('Token usage logged successfully', {
+                     userId: authResult.user.id,
+                     requestId,
+                     model: `${provider}:${model}`,
+                     tokens: cumulativeUsage.totalTokens,
+                     cost: estimatedCost
+                   });
+                 } catch (error) {
+                   logger.error('Failed to log token usage', {
+                     userId: authResult.user.id,
+                     requestId,
+                     error: error instanceof Error ? error.message : 'Unknown error'
+                   });
+                 }
+               }
             }
 
             if (finishReason !== 'length') {

@@ -105,6 +105,68 @@ export async function createCheckoutSession({
 }
 
 /**
+ * Busca o histórico de pagamentos do Stripe para um usuário
+ */
+export async function getPaymentHistory(userId: string): Promise<{
+  id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  created: number;
+  description: string;
+}[]> {
+  // Buscar customer_id do usuário
+  const { data: user } = await supabase
+    .from('users')
+    .select('stripe_customer_id')
+    .eq('id', userId)
+    .single();
+
+  if (!user?.stripe_customer_id) {
+    return [];
+  }
+
+  try {
+    // Buscar payment intents do customer
+    const paymentIntents = await stripe.paymentIntents.list({
+      customer: user.stripe_customer_id,
+      limit: 50,
+    });
+
+    // Buscar invoices do customer para obter descrições mais detalhadas
+    const invoices = await stripe.invoices.list({
+      customer: user.stripe_customer_id,
+      limit: 50,
+    });
+
+    // Mapear payment intents para o formato esperado
+    const payments = paymentIntents.data.map((pi) => {
+      // Tentar encontrar invoice relacionada
+      const relatedInvoice = invoices.data.find(inv => 
+        inv.payment_intent === pi.id
+      );
+
+      return {
+        id: pi.id,
+        amount: pi.amount,
+        currency: pi.currency,
+        status: pi.status,
+        created: pi.created * 1000, // Converter para milliseconds
+        description: relatedInvoice?.description || 
+                    relatedInvoice?.lines.data[0]?.description ||
+                    `Pagamento ${pi.amount / 100} ${pi.currency.toUpperCase()}`,
+      };
+    });
+
+    // Ordenar por data (mais recente primeiro)
+    return payments.sort((a, b) => b.created - a.created);
+  } catch (error) {
+    console.error('Error fetching payment history from Stripe:', error);
+    return [];
+  }
+}
+
+/**
  * Cria uma sessão do portal de cobrança do Stripe
  */
 export async function createPortalSession({
@@ -133,13 +195,13 @@ export async function createPortalSession({
 /**
  * Verifica a assinatura do webhook do Stripe
  */
-export function verifyWebhookSignature(body: string, signature: string): Stripe.Event {
+export async function verifyWebhookSignature(body: string, signature: string): Promise<Stripe.Event> {
   if (!process.env.STRIPE_WEBHOOK_SECRET) {
     throw new Error('STRIPE_WEBHOOK_SECRET is required');
   }
 
   try {
-    return stripe.webhooks.constructEvent(
+    return await stripe.webhooks.constructEventAsync(
       body,
       signature,
       process.env.STRIPE_WEBHOOK_SECRET
