@@ -5,6 +5,7 @@ import { classNames } from '~/utils/classNames';
 import { HeaderActionButtons } from './HeaderActionButtons.client';
 import { ChatDescription } from '~/lib/persistence/ChatDescription.client';
 import { HeaderMenu } from './HeaderMenu.client';
+import { CreditDisplay } from '~/components/billing/CreditDisplay';
 
 export function Header() {
   const chat = useStore(chatStore);
@@ -144,6 +145,9 @@ function UserMenu() {
                   <a href="#" className="text-xs text-bolt-elements-item-contentAccent hover:underline">Gerenciar plano</a>
                   <a href="#" className="ml-auto text-xs text-bolt-elements-item-contentAccent hover:underline">Histórico de pagamentos</a>
                 </div>
+              </div>
+              <div className="px-3 py-2">
+                <CreditDisplay />
               </div>
               <DropdownMenu.Separator className="h-px bg-bolt-elements-borderColor my-1" />
               <DropdownMenu.Item className="flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-bolt-elements-background-depth-3 cursor-pointer" onSelect={() => setIsSettingsOpen(true)}>

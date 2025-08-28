@@ -1,0 +1,172 @@
+{
+  "backup_info": {
+    "timestamp": "2025-01-27T21:15:00Z",
+    "project_id": "jhvsuubkknhdrpwfjsrc",
+    "backup_type": "full_structure_and_data",
+    "created_by": "MCP Supabase Backup Tool",
+    "purpose": "Pre-paywall implementation backup"
+  },
+  "database_structure": {
+    "tables": [
+      {
+        "schema": "public",
+        "name": "users",
+        "rls_enabled": true,
+        "row_count": 2,
+        "columns": [
+          {"name": "id", "data_type": "uuid", "nullable": false, "default": "auth.uid()"},
+          {"name": "email", "data_type": "varchar", "nullable": true, "unique": true},
+          {"name": "created_at", "data_type": "timestamptz", "nullable": true, "default": "now()"},
+          {"name": "plan_id", "data_type": "varchar", "nullable": true, "default": "'basic'"},
+          {"name": "budget_remaining", "data_type": "numeric", "nullable": true, "default": "15.0000"},
+          {"name": "plan_start_date", "data_type": "timestamptz", "nullable": true, "default": "now()"},
+          {"name": "daily_usage", "data_type": "numeric", "nullable": true, "default": "0.0000"},
+          {"name": "daily_usage_date", "data_type": "date", "nullable": true, "default": "CURRENT_DATE"},
+          {"name": "request_count_today", "data_type": "integer", "nullable": true, "default": "0"}
+        ],
+        "primary_keys": ["id"],
+        "foreign_keys": [{"source": "id", "target": "auth.users.id"}]
+      },
+      {
+        "schema": "public",
+        "name": "usage_log",
+        "rls_enabled": true,
+        "row_count": 0,
+        "columns": [
+          {"name": "id", "data_type": "uuid", "nullable": false, "default": "gen_random_uuid()"},
+          {"name": "user_id", "data_type": "uuid", "nullable": true},
+          {"name": "request_id", "data_type": "varchar", "nullable": false, "unique": true},
+          {"name": "model_used", "data_type": "varchar", "nullable": false},
+          {"name": "tokens_used", "data_type": "integer", "nullable": false},
+          {"name": "cost_in_usd", "data_type": "numeric", "nullable": false},
+          {"name": "cost_in_reais", "data_type": "numeric", "nullable": false},
+          {"name": "request_type", "data_type": "varchar", "nullable": true, "default": "'chat'"},
+          {"name": "timestamp", "data_type": "timestamptz", "nullable": true, "default": "now()"}
+        ],
+        "primary_keys": ["id"],
+        "foreign_keys": [{"source": "user_id", "target": "public.users.id"}]
+      },
+      {
+        "schema": "public",
+        "name": "workspaces",
+        "rls_enabled": true,
+        "row_count": 2,
+        "columns": [
+          {"name": "id", "data_type": "uuid", "nullable": false, "default": "gen_random_uuid()"},
+          {"name": "user_id", "data_type": "uuid", "nullable": false},
+          {"name": "chat_id", "data_type": "text", "nullable": false},
+          {"name": "files", "data_type": "jsonb", "nullable": false, "default": "'[]'"},
+          {"name": "last_start_command", "data_type": "text", "nullable": true},
+          {"name": "updated_at", "data_type": "timestamptz", "nullable": false, "default": "now()"}
+        ],
+        "primary_keys": ["id"],
+        "foreign_keys": [{"source": "user_id", "target": "auth.users.id"}]
+      },
+      {
+        "schema": "public",
+        "name": "chats",
+        "rls_enabled": true,
+        "row_count": 0,
+        "columns": [
+          {"name": "id", "data_type": "uuid", "nullable": false, "default": "gen_random_uuid()"},
+          {"name": "user_id", "data_type": "uuid", "nullable": true},
+          {"name": "title", "data_type": "text", "nullable": true},
+          {"name": "created_at", "data_type": "timestamptz", "nullable": true, "default": "now()"},
+          {"name": "updated_at", "data_type": "timestamptz", "nullable": true, "default": "now()"}
+        ],
+        "primary_keys": ["id"],
+        "foreign_keys": [{"source": "user_id", "target": "auth.users.id"}]
+      },
+      {
+        "schema": "public",
+        "name": "messages",
+        "rls_enabled": true,
+        "row_count": 0,
+        "columns": [
+          {"name": "id", "data_type": "uuid", "nullable": false, "default": "gen_random_uuid()"},
+          {"name": "chat_id", "data_type": "uuid", "nullable": true},
+          {"name": "role", "data_type": "text", "nullable": true, "check": "role IN ('user', 'assistant')"},
+          {"name": "content", "data_type": "text", "nullable": true},
+          {"name": "metadata", "data_type": "jsonb", "nullable": true},
+          {"name": "created_at", "data_type": "timestamptz", "nullable": true, "default": "now()"}
+        ],
+        "primary_keys": ["id"],
+        "foreign_keys": [{"source": "chat_id", "target": "public.chats.id"}]
+      },
+      {
+        "schema": "public",
+        "name": "projects",
+        "rls_enabled": true,
+        "row_count": 0,
+        "columns": [
+          {"name": "id", "data_type": "uuid", "nullable": false, "default": "gen_random_uuid()"},
+          {"name": "created_at", "data_type": "timestamptz", "nullable": true, "default": "now()"},
+          {"name": "user_id", "data_type": "uuid", "nullable": true},
+          {"name": "name", "data_type": "text", "nullable": true},
+          {"name": "code", "data_type": "text", "nullable": true}
+        ],
+        "primary_keys": ["id"],
+        "foreign_keys": [{"source": "user_id", "target": "auth.users.id"}]
+      }
+    ]
+  },
+  "data_export": {
+    "users": [
+      {
+        "id": "67d417f3-a1c1-40dd-bdc5-f15f94361df7",
+        "email": "antoniojhuliene@gmail.com",
+        "created_at": "2025-08-06 18:23:56.099869+00",
+        "plan_id": "basic",
+        "budget_remaining": "15.0000",
+        "plan_start_date": "2025-08-06 18:23:56.099869+00",
+        "daily_usage": "0.0000",
+        "daily_usage_date": "2025-08-06",
+        "request_count_today": 0
+      },
+      {
+        "id": "217cd274-d057-44ae-98e5-6fed72a7245e",
+        "email": "desafiotrintadiasbrasil@gmail.com",
+        "created_at": "2025-08-07 17:26:57.952304+00",
+        "plan_id": "basic",
+        "budget_remaining": "15.0000",
+        "plan_start_date": "2025-08-07 17:26:57.952304+00",
+        "daily_usage": "0.0000",
+        "daily_usage_date": "2025-08-07",
+        "request_count_today": 0
+      }
+    ],
+    "workspaces": [
+      {
+        "id": "d807b218-1dbe-40c5-9e13-5a4c2a90a7e1",
+        "user_id": "67d417f3-a1c1-40dd-bdc5-f15f94361df7",
+        "chat_id": "1",
+        "files": [],
+        "last_start_command": null,
+        "updated_at": "2025-08-08 04:45:27.871+00"
+      },
+      {
+        "id": "dcdd66c1-3bc4-4cc3-af71-a72ad7d3071a",
+        "user_id": "67d417f3-a1c1-40dd-bdc5-f15f94361df7",
+        "chat_id": "default",
+        "files": [],
+        "last_start_command": null,
+        "updated_at": "2025-08-08 04:50:10.974+00"
+      }
+    ],
+    "usage_log": [],
+    "chats": [],
+    "messages": [],
+    "projects": []
+  },
+  "security_notes": {
+    "rls_enabled": "All tables have Row Level Security enabled",
+    "auth_integration": "Tables are properly linked to Supabase Auth via auth.users.id",
+    "data_integrity": "Foreign key constraints are in place",
+    "backup_safety": "This backup contains user data and should be stored securely"
+  },
+  "restore_instructions": {
+    "note": "To restore this backup, recreate tables with the structure above and insert data using the exported JSON",
+    "warning": "Ensure RLS policies are recreated after table restoration",
+    "dependencies": "Supabase Auth must be configured before restoring user-linked tables"
+  }
+}

@@ -1,0 +1,320 @@
+Você é um Arquiteto/Implementador Sênior. Implemente o paywall sem quebrar o que já existe, **aplicando TODAS as mudanças de banco via MCP** (modo transacional e idempotente). O projeto é: **Remix + Cloudflare Workers + Supabase Postgres (com RLS) + Vercel AI SDK**. Auth: Supabase. Chokepoint de IA: `/api/chat`. `usage_log` já existe e usa coluna `created_at` para timestamp.
+
+REQUISITOS DO MODELO DE QUOTAS E PLANOS
+- Limite diário (para todos os planos): **5 interações/dia** (não acumulável).
+- Plano **free**: além do 5/dia, **teto mensal de interações = 30**.
+- Planos pagos por **tokens/mês**:
+  - **personal (R$59)** → **8.000.000 tokens/mês**
+  - **pro (R$119)** → **18.000.000 tokens/mês**
+  - **business (R$239)** → **40.000.000 tokens/mês**
+- Enforcement no `/api/chat`, na ordem:
+  1) Pré-checagem **cap de tokens/mês** (janela do billing period).
+  2) Débito **atômico** de **1 interação** (5/dia + cap mensal=30 no free) via função SQL.
+  3) Chamada LLM.
+  4) Log de tokens reais em `usage_log`.
+
+REGRAS IMPORTANTES
+- **APLIQUE O ESQUEMA NO BANCO VIA MCP** (supabase postgres connector). Use IF NOT EXISTS/ON CONFLICT e transações; retorne logs das execuções SQL.
+- **NÃO** altere ou remova colunas existentes; apenas **adicione** o que estiver descrito.
+- `plan_id` deve usar as chaves: `free | personal | pro | business` (o default atual é `free`; mantenha).
+- Use `usage_log.created_at` em consultas/índices; **não** crie coluna `timestamp`.
+- Webhook Stripe deve ler **corpo bruto** (`await request.text()`) e verificar a assinatura; se o SDK não suportar o runtime, faça verificação manual (Web Crypto).
+- Webhook usa Supabase **Service Role** (RLS ativo).
+- **API keys próprias** do usuário: mantenha a opção, mas quando usada, marque o request para **não computar tokens no cap** (flag simples no guard).
+
+================================================================
+A) BANCO DE DADOS — APLICAR VIA MCP (transacional)
+================================================================
+1) Rode estes comandos SQL **via MCP** (idempotente). Se uma etapa falhar, descreva a causa e continue com as demais; ao final retorne um sumário do que foi aplicado.
+
+```sql
+-- Extensão para UUID
+create extension if not exists pgcrypto;
+
+-- Tabela de planos
+create table if not exists public.plans (
+  id text primary key,                         -- 'free' | 'personal' | 'pro' | 'business'
+  name text not null,
+  daily_allowance integer not null default 5,  -- 5/dia
+  monthly_interaction_cap integer,            -- free: 30; pagos: null
+  monthly_token_cap bigint not null default 0,-- pagos: 8M/18M/40M; free: 0
+  price_brl_cents integer not null default 0,
+  created_at timestamptz default now()
+);
+
+insert into public.plans (id, name, daily_allowance, monthly_interaction_cap, monthly_token_cap, price_brl_cents)
+values
+  ('free',     'Free',     5, 30,         0,    0),
+  ('personal', 'Personal', 5, null,   8000000,  5900),
+  ('pro',      'Pro',      5, null,  18000000, 11900),
+  ('business', 'Business', 5, null,  40000000, 23900)
+on conflict (id) do nothing;
+
+-- Campos de billing (se faltarem). NÃO mexer no que já existe.
+alter table public.users
+  add column if not exists stripe_customer_id text,
+  add column if not exists stripe_subscription_id text,
+  add column if not exists billing_period_start timestamptz,
+  add column if not exists billing_period_end timestamptz;
+
+-- Ledger de interações (exclusivo para contagem de requests)
+create table if not exists public.credit_ledger (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.users(id) on delete cascade,
+  request_id text,
+  amount integer not null default 1,                -- 1 interação por request
+  source text not null check (source in ('daily','monthly')),
+  reason text,
+  created_at timestamptz default now()
+);
+
+-- Blindagem de double-spend
+create unique index if not exists ux_credit_ledger_request
+  on public.credit_ledger(request_id);
+
+create index if not exists idx_credit_ledger_user_created
+  on public.credit_ledger(user_id, created_at);
+
+-- Idempotência de webhooks Stripe
+create table if not exists public.stripe_events (
+  id text primary key,
+  type text not null,
+  payload jsonb not null,
+  received_at timestamptz default now()
+);
+
+-- Índices úteis existentes/garantidos
+create index if not exists idx_usage_log_user_ts on public.usage_log (user_id, created_at);
+create index if not exists idx_users_plan on public.users (plan_id);
+
+-- Função atômica para debitar 1 interação (5/dia + 30/mês no free).
+-- Segurança: SECURITY DEFINER + search_path; grants para authenticated/service_role.
+create or replace function public.debit_credit_safely(
+  p_user_id uuid, p_request_id text, p_cost integer, p_now timestamptz
+) returns table (ok boolean, reason text, debited_source text) as $$
+declare
+  v_user record;
+  v_plan record;
+  v_today date := (p_now at time zone 'UTC')::date;
+  v_month_start date := date_trunc('month', p_now)::date;
+  v_month_end   date := (date_trunc('month', p_now) + interval '1 month - 1 second')::date;
+  v_daily_used integer;
+  v_monthly_used_interactions integer;
+begin
+  select u.*, p.* into v_user, v_plan
+  from public.users u
+  left join public.plans p on p.id = coalesce(u.plan_id, 'free')
+  where u.id = p_user_id
+  for update;
+
+  if not found then
+    return query select false, 'USER_NOT_FOUND', null;
+  end if;
+
+  -- reset diário "lazy" (mantém compat com colunas existentes)
+  if v_user.daily_usage_date is distinct from v_today then
+    update public.users
+       set daily_usage = 0,
+           request_count_today = 0,
+           daily_usage_date = v_today
+     where id = p_user_id;
+  end if;
+
+  -- uso do dia
+  select coalesce(sum(l.amount),0)
+    into v_daily_used
+    from public.credit_ledger l
+   where l.user_id = p_user_id
+     and l.source = 'daily'
+     and l.created_at::date = v_today;
+
+  -- interações do mês (qualquer source)
+  select coalesce(sum(l.amount),0)
+    into v_monthly_used_interactions
+    from public.credit_ledger l
+   where l.user_id = p_user_id
+     and l.created_at::date between v_month_start and v_month_end;
+
+  -- teto mensal de interações (apenas se definido; para free=30)
+  if v_plan.monthly_interaction_cap is not null
+     and (v_monthly_used_interactions + p_cost) > v_plan.monthly_interaction_cap then
+    return query select false, 'MONTHLY_INTERACTION_CAP_REACHED', null;
+  end if;
+
+  -- tenta debitar do diário (até 5/dia)
+  if (v_daily_used + p_cost) <= coalesce(v_plan.daily_allowance, 5) then
+    insert into public.credit_ledger (user_id, request_id, amount, source, reason)
+    values (p_user_id, p_request_id, p_cost, 'daily', 'CHAT_MESSAGE');
+    return query select true, null, 'daily';
+  end if;
+
+  -- excedeu diário → registra como 'monthly'
+  insert into public.credit_ledger (user_id, request_id, amount, source, reason)
+  values (p_user_id, p_request_id, p_cost, 'monthly', 'CHAT_MESSAGE');
+  return query select true, null, 'monthly';
+end;
+$$ language plpgsql;
+
+-- Segurança da função
+alter function public.debit_credit_safely(uuid, text, integer, timestamptz)
+  security definer
+  set search_path = public;
+revoke all on function public.debit_credit_safely(uuid, text, integer, timestamptz) from public;
+grant execute on function public.debit_credit_safely(uuid, text, integer, timestamptz) to authenticated, service_role;
+
+-- RLS mínima para ledger: SELECT do próprio; INSERT só via RPC
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies where schemaname='public' and tablename='credit_ledger' and policyname='read_own_ledger'
+  ) then
+    create policy "read_own_ledger" on public.credit_ledger
+      for select using (user_id = auth.uid());
+  end if;
+end$$;
+revoke insert on public.credit_ledger from authenticated;
+````
+
+2. **Retorne**: (i) lista das sentenças executadas, (ii) sucesso/erro de cada uma, (iii) diff de objetos criados/garantidos.
+
+\================================================================
+B) CÓDIGO — MÓDULO STRIPE + ROTAS + PATCH DO `/api/chat`
+========================================================
+
+Crie/ajuste **apenas** o necessário:
+
+1. **Env (.env.example)** — apenas nomes (sem valores):
+
+```
+STRIPE_SECRET_KEY
+STRIPE_WEBHOOK_SECRET
+STRIPE_PRICE_PERSONAL_BRL   # → plan_id=personal
+STRIPE_PRICE_PRO_BRL        # → plan_id=pro
+STRIPE_PRICE_BUSINESS_BRL   # → plan_id=business
+SUPABASE_URL
+SUPABASE_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY   # webhook server-side (RLS)
+APP_BASE_URL
+OPENROUTER_API_KEY
+```
+
+2. **Módulo** `app/server/billing/stripe.server.ts`
+
+* `getOrCreateCustomer(userId, email)` → salva `stripe_customer_id` em `users`.
+* `createCheckoutSession({ userId, priceId })` → `mode:'subscription'`, `currency:'brl'`, `success_url=${APP_BASE_URL}/billing/success`, `cancel_url=${APP_BASE_URL}/billing/cancel`.
+* `createPortalSession({ userId })`.
+* Mapa **price→plan** (via env):
+
+  ```ts
+  export const priceToPlan: Record<string,string> = {
+    [process.env.STRIPE_PRICE_PERSONAL_BRL!]: 'personal',
+    [process.env.STRIPE_PRICE_PRO_BRL!]: 'pro',
+    [process.env.STRIPE_PRICE_BUSINESS_BRL!]: 'business',
+  };
+  ```
+
+3. **Rotas**:
+
+* `app/routes/api.stripe.checkout.ts` (POST) → body `{ priceId }` → `{ url }`
+* `app/routes/api.stripe.portal.ts` (POST) → `{ url }`
+* `app/routes/api.stripe.webhook.ts` (POST):
+
+  * **Corpo bruto**: `const body = await request.text();`
+
+  * Verifique assinatura (SDK; se não suportar, verificação manual HMAC v1 com Web Crypto).
+
+  * Idempotência: salve `event.id` em `public.stripe_events` (ignore se já existe).
+
+  * Eventos:
+
+    * `customer.subscription.created|updated`: derive `plan_id` do `priceId`; converta epoch → ISO:
+
+      ```ts
+      const start = new Date(sub.current_period_start * 1000).toISOString();
+      const end   = new Date(sub.current_period_end   * 1000).toISOString();
+      ```
+
+      Atualize `users.plan_id`, `stripe_subscription_id`, `billing_period_start/end`.
+    * `customer.subscription.deleted`: `plan_id='free'`, `stripe_subscription_id=null`.
+
+  * **Supabase** nessa rota deve usar **Service Role**.
+
+4. **Patch** no `app/routes/api.chat.ts` (mínimo, no topo do handler):
+
+* Resolva usuário (Supabase Auth obrigatório).
+
+* **Pré-cheque tokens/mês**:
+
+  * Janela = `users.billing_period_start/end`; se nulas → mês civil corrente (`date_trunc('month', now())` até +1 mês - 1s).
+  * `tokens_used_so_far = SUM(usage_log.tokens_used)` na janela.
+  * Junte com `plans.monthly_token_cap` via `users.plan_id`.
+  * Estime `estimated_tokens` (heurística: `inputLen + max(512, round(inputLen*1.2))`).
+  * Se `monthly_token_cap > 0` **e** `tokens_used_so_far + estimated_tokens > cap` → **HTTP 402** `{ error:true, reason:'MONTHLY_TOKEN_CAP_REACHED' }` e não chame o LLM.
+  * **Se o request estiver marcado para usar API key própria do usuário, pule a checagem de tokens/mês** (flag `useOwnKey=true`).
+
+* **Débito de interação** (5/dia + 30/mês no free):
+
+  * `requestId = crypto.randomUUID()`
+  * RPC: `select * from public.debit_credit_safely(userId, requestId, 1, now());`
+  * Se `ok=false` e `reason='MONTHLY_INTERACTION_CAP_REACHED'` → **HTTP 402** `{ error:true, reason:'MONTHLY_INTERACTION_CAP' }`.
+
+* **Chame o LLM**:
+
+  * Se `plan_id==='free'` e usuário escolheu modelo caro, force modelo econômico (`gemini-2.5-flash` ou `gpt-4o-mini`) e informe no log/telemetria.
+
+* **PÓS (onFinish já existente)**:
+
+  * Obtenha `tokens_used` reais.
+  * Insira em `usage_log` (mantendo seus campos de custo se já calcula).
+  * Se `tokens_used_so_far + tokens_used >= cap` → inclua aviso no payload `{ warning:'MONTHLY_TOKEN_CAP_NEAR', remaining: cap - (tokens_used_so_far + tokens_used) }`.
+
+5. **UI**:
+
+* `app/components/ui/CreditDisplay.tsx` (novo): exiba **Interações de hoje: X/5** (soma do `credit_ledger` do dia, `source='daily'`) e **Tokens ciclo: usados / cap** (server calcula e expõe em um endpoint leve).
+* `app/components/ui/UpgradeModal.tsx` (novo): abre quando `/api/chat` retornar 402; mensagens específicas para `MONTHLY_TOKEN_CAP_REACHED` e `MONTHLY_INTERACTION_CAP`.
+* `app/components/header/Header.tsx`: adicione **1 linha** para renderizar `CreditDisplay` no `UserMenu`.
+
+\================================================================
+C) .env.example (gerar arquivo)
+===============================
+
+Inclua apenas os nomes:
+
+```
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+STRIPE_PRICE_PERSONAL_BRL=
+STRIPE_PRICE_PRO_BRL=
+STRIPE_PRICE_BUSINESS_BRL=
+SUPABASE_URL=
+SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+APP_BASE_URL=
+OPENROUTER_API_KEY=
+```
+
+\================================================================
+D) TEST PLAN (retornar como texto no final)
+===========================================
+
+* **Free**: 30 interações no mês → bloqueia (mesmo com 5/dia).
+* **Daily**: 6ª interação no dia → registra como `monthly` (planos pagos) ou bloqueia se o free já atingiu 30/mês.
+* **Tokens cap**:
+
+  * personal: com \~7.9M tokens usados e `estimated_tokens ≈ 300k` → pré-checagem deve bloquear com `MONTHLY_TOKEN_CAP_REACHED`.
+* **Webhook duplicado**: `stripe_events` impede reprocesso.
+* **Upgrade Pro**: `plan_id` muda para `pro`, `billing_period_*` atualiza; próxima chamada libera modelos avançados.
+* **API key própria**: quando `useOwnKey=true`, pular checagem de tokens/mês (mas ainda contar interação diária); validar que não grava em `usage_log` se politicamente definido.
+
+\================================================================
+E) ENTREGAR (resposta final nesta conversa)
+===========================================
+
+1. **FILES CHANGED/CREATED** (lista completa)
+2. **SQL EXECUTED VIA MCP** (com status de cada comando)
+3. **DIFFS ESSENCIAIS** (patches por arquivo)
+4. **.env.example** (conteúdo)
+5. **TEST PLAN** (como executar)
+6. **NOTAS** (decisões, limitações de runtime Stripe/Workers e fallback de verificação)
+
+ 

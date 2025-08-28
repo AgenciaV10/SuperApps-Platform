@@ -14,6 +14,7 @@ import { extractPropertiesFromMessage } from '~/lib/.server/llm/utils';
 import type { DesignScheme } from '~/types/design-scheme';
 import { MCPService } from '~/lib/services/mcpService';
 import { optionalAuth } from '~/lib/auth/middleware';
+import { canUserInteract, debitUserInteraction, calculateTotalTokens } from '~/server/billing/credits.server';
 
 export async function action(args: ActionFunctionArgs) {
   return chatAction(args);
@@ -53,6 +54,9 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
     logger.debug('Chat request without authentication - falling back to local mode');
   }
 
+  // Gerar ID único para esta requisição
+  const requestId = generateId();
+
   const { messages, files, promptId, contextOptimization, supabase, chatMode, designScheme, maxLLMSteps } =
     await request.json<{
       messages: Messages;
@@ -71,6 +75,78 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
       };
       maxLLMSteps: number;
     }>();
+
+  // Verificação de limites para usuários autenticados
+  if (authResult.isAuthenticated && authResult.user) {
+    const canInteract = await canUserInteract(authResult.user.id);
+    
+    if (!canInteract.canInteract) {
+      logger.warn('User interaction blocked', {
+        userId: authResult.user.id,
+        reason: canInteract.reason,
+      });
+      
+      return new Response(
+        JSON.stringify({
+          error: true,
+          message: canInteract.reason || 'Usage limit exceeded',
+          statusCode: 429,
+          isRetryable: false,
+          type: 'usage_limit',
+          usage: canInteract.usage,
+        }),
+        {
+          status: 429,
+          headers: { 'Content-Type': 'application/json' },
+          statusText: 'Too Many Requests',
+        }
+      );
+    }
+
+    // Estimar tokens da requisição
+    const estimatedTokens = calculateTotalTokens(messages);
+    logger.debug('Estimated tokens for request', {
+      userId: authResult.user.id,
+      requestId,
+      estimatedTokens,
+    });
+
+    // Debitar a interação imediatamente
+    const debitResult = await debitUserInteraction(
+      authResult.user.id,
+      requestId,
+      estimatedTokens
+    );
+
+    if (!debitResult.success) {
+      logger.error('Failed to debit user interaction', {
+        userId: authResult.user.id,
+        requestId,
+        error: debitResult.error,
+      });
+      
+      return new Response(
+        JSON.stringify({
+          error: true,
+          message: 'Failed to process request: ' + debitResult.error,
+          statusCode: 500,
+          isRetryable: true,
+        }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+          statusText: 'Internal Server Error',
+        }
+      );
+    }
+
+    logger.info('User interaction debited successfully', {
+      userId: authResult.user.id,
+      requestId,
+      remainingBudget: debitResult.remainingBudget,
+      dailyUsage: debitResult.dailyUsage,
+    });
+  }
 
   // Adicionar informações do usuário autenticado ao contexto se disponível
   const enhancedContext = {
@@ -99,6 +175,16 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
     const mcpService = MCPService.getInstance();
     const totalMessageContent = messages.reduce((acc, message) => acc + message.content, '');
     logger.debug(`Total message length: ${totalMessageContent.split(' ').length}, words`);
+    
+    // Log da requisição para auditoria
+    if (authResult.isAuthenticated) {
+      logger.info('Processing authenticated chat request', {
+        userId: authResult.user?.id,
+        requestId,
+        messageCount: messages.length,
+        chatMode,
+      });
+    }
 
     let lastChunk: string | undefined = undefined;
 
